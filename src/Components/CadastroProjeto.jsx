@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { FaSearch, FaUser, FaCalendarAlt, FaTrash, FaPlus } from 'react-icons/fa';
 
 import exemplo2 from '../assets/exemplo2.jpg';
 import exemplo3 from '../assets/exemplo3.jpg';
@@ -14,7 +15,7 @@ import exemplo1 from '../assets/exemplo1.jpg';
 import { 
   Container, Header, AddButton, ProjectGrid, ProjectCard, ProjectTitle, 
   ProjectInfo, ProgressBar, Status, ProjectImage, FilterContainer, 
-  FilterButton, Sidebar, SearchInput, Content, DeleteButton 
+  FilterButton, Sidebar, SearchInput, Content, DeleteButton, CardContent, Spinner
 } from '../Styles/StyledCadastroProjeto';
 
 const initialProjects = [
@@ -30,9 +31,20 @@ const initialProjects = [
 ];
 
 export default function CadastroProjeto() {
-  const [projects, setProjects] = useState(initialProjects);
+  const [projects, setProjects] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('Todos');
   const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    // Simulando uma chamada assíncrona para carregar os projetos
+    const timer = setTimeout(() => {
+      setProjects(initialProjects);
+      setIsLoading(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const filteredProjects = projects.filter(project => 
     (statusFilter === 'Todos' || project.status === statusFilter) &&
@@ -47,14 +59,35 @@ export default function CadastroProjeto() {
     <Container>
       <Sidebar>
         <h3>Pesquisar</h3>
-        <SearchInput 
-          type="text" 
-          placeholder="Buscar projeto..." 
-          value={searchTerm} 
-          onChange={(e) => setSearchTerm(e.target.value)} 
-        />
+        <div style={{ 
+          position: 'relative',
+          marginBottom: '1rem'
+        }}>
+          <SearchInput 
+            type="text" 
+            placeholder="Buscar projeto..." 
+            value={searchTerm} 
+            onChange={(e) => setSearchTerm(e.target.value)}
+            aria-label="Buscar projeto"
+          />
+          <FaSearch style={{
+            position: 'absolute',
+            right: '0.8rem',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            color: '#a0aec0',
+            fontSize: '0.85rem',
+            pointerEvents: 'none',
+            opacity: 0.8
+          }} />
+        </div>
 
-        <Link to="/adicionar-projetos"><AddButton>+ Adicionar novo projeto</AddButton></Link>
+        <Link to="/adicionar-projetos" style={{ textDecoration: 'none', width: '100%' }}>
+          <AddButton>
+            <FaPlus style={{ marginRight: '4px' }} />
+            Adicionar novo projeto
+          </AddButton>
+        </Link>
       </Sidebar>
 
       <Content>
@@ -72,23 +105,118 @@ export default function CadastroProjeto() {
           ))}
         </FilterContainer>
 
-        <ProjectGrid>
-          {filteredProjects.map((project) => (
-            <ProjectCard key={project.id}>
-              <Link to={`/projeto/${project.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                <ProjectImage src={project.image} alt={project.name} />
-                <ProjectTitle>{project.name}</ProjectTitle>
-              </Link>
-              <ProjectInfo>Dono: {project.owner}</ProjectInfo>
-              <ProjectInfo>Data: {project.date}</ProjectInfo>
-              <ProgressBar progress={project.progress}>
-                <div />
-              </ProgressBar>
-              <Status status={project.status}>{project.status}</Status>
-              <DeleteButton onClick={() => handleDelete(project.id)}>Deletar</DeleteButton>
-            </ProjectCard>
-          ))}
-        </ProjectGrid>
+        {isLoading ? (
+          <div style={{
+            gridColumn: '1 / -1',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: '3rem 0',
+            minHeight: '300px'
+          }}>
+            <Spinner />
+            <div style={{
+              fontSize: '1.2rem',
+              color: '#a0aec0',
+              marginTop: '1rem'
+            }}>
+              Carregando projetos...
+            </div>
+          </div>
+        ) : (
+          <ProjectGrid>
+            {filteredProjects.length === 0 ? (
+              <div style={{
+                gridColumn: '1 / -1',
+                textAlign: 'center',
+                padding: '2rem',
+                color: '#a0aec0',
+                fontSize: '1.1rem'
+              }}>
+                Nenhum projeto encontrado com os filtros atuais.
+                {searchTerm && (
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <button 
+                      onClick={() => {
+                        setSearchTerm('');
+                        setStatusFilter('Todos');
+                      }}
+                      style={{
+                        background: 'transparent',
+                        border: '1px solid #4CAF50',
+                        color: '#4CAF50',
+                        padding: '0.5rem 1rem',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        marginTop: '0.5rem',
+                        fontSize: '0.9rem',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseOver={(e) => {
+                        e.target.style.background = 'rgba(76, 175, 80, 0.1)';
+                      }}
+                      onMouseOut={(e) => {
+                        e.target.style.background = 'transparent';
+                      }}
+                    >
+                      Limpar filtros
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              filteredProjects.map((project, index) => (
+                <ProjectCard 
+                  key={project.id}
+                  delay={`${index * 100}ms`}
+                >
+                  <Link to={`/projeto/${project.id}`} style={{ textDecoration: 'none', color: 'inherit', flex: 1 }}>
+                    <ProjectImage src={project.image} alt={project.name} />
+                    <CardContent>
+                      <ProjectTitle>{project.name}</ProjectTitle>
+                      <ProjectInfo>
+                        <FaUser size={12} />
+                        <span>{project.owner}</span>
+                      </ProjectInfo>
+                      <ProjectInfo>
+                        <FaCalendarAlt size={12} />
+                        <span>{project.date}</span>
+                      </ProjectInfo>
+                      <div style={{ marginTop: 'auto', paddingTop: '1rem' }}>
+                        <ProgressBar progress={project.progress}>
+                          <div />
+                        </ProgressBar>
+                        <Status status={project.status}>
+                          {project.status}
+                        </Status>
+                      </div>
+                    </CardContent>
+                  </Link>
+                  <div style={{ 
+                    position: 'absolute', 
+                    bottom: '0.75rem', 
+                    right: '0.75rem',
+                    zIndex: 2,
+                    opacity: 0.7,
+                    transition: 'opacity 0.2s ease'
+                  }}>
+                    <DeleteButton 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // Não faz nada, apenas evita o comportamento padrão
+                      }}
+                      aria-label="Botão de deletar (desativado temporariamente)"
+                    >
+                      <FaTrash />
+                    </DeleteButton>
+                  </div>
+                </ProjectCard>
+              ))
+            )}
+          </ProjectGrid>
+        )}
       </Content>
     </Container>
   );
