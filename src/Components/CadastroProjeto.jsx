@@ -15,7 +15,8 @@ import exemplo1 from '../assets/exemplo1.jpg';
 import { 
   Container, Header, AddButton, ProjectGrid, ProjectCard, ProjectTitle, 
   ProjectInfo, ProgressBar, Status, ProjectImage, FilterContainer, 
-  FilterButton, Sidebar, SearchInput, Content, DeleteButton, CardContent, Spinner
+  FilterButton, Sidebar, SearchInput, Content, DeleteButton, CardContent, Spinner,
+  ModalOverlay, ModalContent, ModalTitle, ModalMessage, ModalActions, CancelButton, ConfirmButton
 } from '../Styles/StyledCadastroProjeto';
 
 const initialProjects = [
@@ -35,6 +36,7 @@ export default function CadastroProjeto() {
   const [isLoading, setIsLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('Todos');
   const [searchTerm, setSearchTerm] = useState('');
+  const [projectToDelete, setProjectToDelete] = useState(null);
 
   useEffect(() => {
     // Simulando uma chamada assíncrona para carregar os projetos
@@ -53,6 +55,25 @@ export default function CadastroProjeto() {
 
   const handleFilter = (status) => {
     setStatusFilter(status);
+  };
+
+  const handleDeleteClick = (projectId, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const project = projects.find(p => p.id === projectId);
+    setProjectToDelete(project);
+  };
+
+  const handleConfirmDelete = () => {
+    if (projectToDelete) {
+      setProjects(projects.filter(project => project.id !== projectToDelete.id));
+      setProjectToDelete(null);
+      // Aqui você pode adicionar uma chamada para sua API para deletar o projeto
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setProjectToDelete(null);
   };
 
   return (
@@ -202,12 +223,8 @@ export default function CadastroProjeto() {
                     transition: 'opacity 0.2s ease'
                   }}>
                     <DeleteButton 
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        // Não faz nada, apenas evita o comportamento padrão
-                      }}
-                      aria-label="Botão de deletar (desativado temporariamente)"
+                      onClick={(e) => handleDeleteClick(project.id, e)}
+                      aria-label="Excluir projeto"
                     >
                       <FaTrash />
                     </DeleteButton>
@@ -218,6 +235,27 @@ export default function CadastroProjeto() {
           </ProjectGrid>
         )}
       </Content>
+      
+      {/* Modal de Confirmação de Exclusão */}
+      {projectToDelete && (
+        <ModalOverlay onClick={handleCancelDelete}>
+          <ModalContent onClick={(e) => e.stopPropagation()}>
+            <ModalTitle>Confirmar Exclusão</ModalTitle>
+            <ModalMessage>
+              Tem certeza que deseja excluir o projeto <strong>"{projectToDelete.name}"</strong>?
+              Esta ação não pode ser desfeita.
+            </ModalMessage>
+            <ModalActions>
+              <CancelButton onClick={handleCancelDelete}>
+                Cancelar
+              </CancelButton>
+              <ConfirmButton onClick={handleConfirmDelete}>
+                Sim, Excluir
+              </ConfirmButton>
+            </ModalActions>
+          </ModalContent>
+        </ModalOverlay>
+      )}
     </Container>
   );
 }

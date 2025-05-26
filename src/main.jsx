@@ -5,7 +5,7 @@ import App from './App.jsx';
 import Login from './Components/Login.jsx';
 import Contato from './Components/Contato.jsx';
 import GlobalStyled from './GlobalStyled.js';
-import CadastroProjeto from './Components/Cadastroprojeto.jsx';
+import CadastroProjeto from './Components/CadastroProjeto.jsx';
 import AdicionarProjeto from './Components/AdicionarProjeto.jsx';
 import AdicionarAtividade from './Components/AdicionarAtividade.jsx';
 import AdicionarSubAtividade from './Components/AdicionarSubAtividade.jsx';

@@ -455,6 +455,79 @@ export const ProgressBar = styled.div`
   }
 `;
 
+// Estilos para o Modal de Confirmação
+export const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 1rem;
+`;
+
+export const ModalContent = styled.div`
+  background: #2d3748;
+  padding: 2rem;
+  border-radius: 8px;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+`;
+
+export const ModalTitle = styled.h3`
+  color: #e2e8f0;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  font-size: 1.25rem;
+`;
+
+export const ModalMessage = styled.p`
+  color: #cbd5e0;
+  margin-bottom: 2rem;
+  line-height: 1.5;
+`;
+
+export const ModalActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+`;
+
+export const CancelButton = styled.button`
+  background: #4a5568;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  
+  &:hover {
+    background: #4a5568cc;
+  }
+`;
+
+export const ConfirmButton = styled.button`
+  background: #e53e3e;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  
+  &:hover {
+    background: #c53030;
+  }
+`;
+
 export const Status = styled.span`
   display: inline-flex;
   align-items: center;
