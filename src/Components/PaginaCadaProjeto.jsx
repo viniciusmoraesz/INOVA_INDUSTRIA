@@ -5,13 +5,14 @@ import {
   FaFilePdf, FaFileExcel, FaFileWord, FaFileAlt, FaFileImage
 } from 'react-icons/fa';
 import exemplo1 from '../assets/exemplo1.jpg';
+
 import {
   PageContainer, Header, Title, ProjectInfo, ProjectImage, DetailItem,
   ProgressBar, ProgressFill, BackButton, Description, Section,
   SectionHeader, SectionTitle, SectionContent, ActionButton, TeamGrid,
   TeamMember, Avatar, TaskList, TaskCard, TaskInfo, TaskMeta, DocumentList,
   DocumentItem, DocumentInfo, DocumentIcon, HistoryItem, ButtonGroup
-} from '../Styles/PaginaCadaProjeto';
+} from '../Styles/StyledPaginaCadaProjeto.js';
 
 // Dados de exemplo (seriam substituídos por chamadas à API)
 const projetos = [

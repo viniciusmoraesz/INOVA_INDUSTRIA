@@ -1,20 +1,26 @@
 import { Link } from "react-router-dom"
-
-import {
-  ContainerPrincipal,
-  ContainerForm,
-  FormInput,
-  FormLabel,
-  FormButton,
-  LinkTextContainer,
-  FormField,
-  ErrorMessage
-} from "../Styles/StyledContato"
 import { useState } from "react"
-
 import { useForm } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from 'yup'
+import {
+  FormContainer,
+  Title,
+  Form,
+  FormGroup,
+  LocationGroup,
+  Label,
+  Input,
+  Select,
+  TextArea,
+  PhoneInputContainer,
+  CountryCode,
+  PhoneInput,
+  SubmitButton,
+  ErrorMessage as ErrorMessageStyled,
+  SuccessMessage,
+  LinkText
+} from "../Styles/StyledContato"
 
 
 
@@ -34,15 +40,10 @@ const schema = yup.object({
 })
 
 export default function Contato() {
+  const [listaCliente, setListaCliente] = useState([])
+  const [submitStatus, setSubmitStatus] = useState(null)
 
-//   const [cliente, setCliente] = useState({
-//     'nome' : '', 'email' : '', 'empresa' : '', 'ramo' : '', 'telefone' : '', 
-//     'funcionario' : '', 'estado' : '', 'cidade' : '', 'buscando' : ''}
-// )
-
-  const[listaCliente, setlistaCliente] = useState([])
-
-  const{register, handleSubmit, reset, setValue, setFocus, formState:{errors}} = useForm({
+  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm({
     resolver: yupResolver(schema)
   })
 
@@ -50,52 +51,81 @@ export default function Contato() {
   //   setCliente({...cliente, [e.target.name]: e.target.value})
   // }
 
-  function adicionarCliente(cliente){
-    // e.preventDefault()
-    setlistaCliente([...listaCliente, cliente])
-    reset();
-  //   setCliente({
-  //   nome: '', email: '', empresa: '', ramo: '', telefone: '', 
-  //   funcionario: '', estado: '', cidade: '', buscando: ''
-  // })
+  function adicionarCliente(cliente) {
+    setListaCliente([...listaCliente, cliente])
+    setSubmitStatus('success')
+    reset()
+    
+    // Limpa a mensagem de sucesso após 5 segundos
+    setTimeout(() => {
+      setSubmitStatus(null)
+    }, 5000)
   }
 
-  function buscarCep(e){
-    const cep = e.target.value.replace(/\D/g, "")
-    fetch(`https://viacep.com.br/ws/${cep}/json`)
-    .then(res => res.json())
-    .then(data => {
-      setValue('cidade', data.localidade)
-      setValue('estado', data.uf)
-    })
+  async function buscarCep(e) {
+    const cep = e.target.value.replace(/\D/g, '')
+    if (cep.length === 8) {
+      try {
+        const response = await fetch(`https://viacep.com.br/ws/${cep}/json`)
+        const data = await response.json()
+        if (!data.erro) {
+          setValue('cidade', data.localidade)
+          setValue('estado', data.uf)
+        }
+      } catch (error) {
+        console.error('Erro ao buscar CEP:', error)
+      }
+    }
   }
 
 
 
   return (
-    <>
-    <ContainerPrincipal>
-      <h1>Entre em contato com nossa equipe</h1>
-      <ContainerForm onSubmit={handleSubmit(adicionarCliente)}>
-        <FormField>
-          <FormLabel>Nome*</FormLabel>
-          <FormInput type="text" {...register('nome')}  hasError={!!errors.nome}/>
-          <ErrorMessage>{errors.nome?.message}</ErrorMessage>
-        </FormField>
-        <FormField>
-          <FormLabel>Email*</FormLabel>
-          <FormInput type="email" {...register('email')}  hasError={!!errors.email}/>
-          <ErrorMessage>{errors.email?.message}</ErrorMessage>
-        </FormField>
-        <FormField>
-          <FormLabel>Empresa*</FormLabel>
-          <FormInput type="text" {...register('empresa')}  hasError={!!errors.empresa}/>
-          <ErrorMessage>{errors.empresa?.message}</ErrorMessage>
-        </FormField>
-        <FormField>
-          <FormLabel>Selecione o ramo da empresa *</FormLabel>
-          <FormInput as="select" {...register('ramo')}  hasError={!!errors.ramo}>
-            <option value="">Selecionar</option>
+    <FormContainer>
+      <Title>Entre em contato com nossa equipe</Title>
+      
+      <Form onSubmit={handleSubmit(adicionarCliente)}>
+        <FormGroup>
+          <Label htmlFor="nome">Nome*</Label>
+          <Input 
+            type="text" 
+            id="nome" 
+            {...register('nome')} 
+            $hasError={!!errors.nome}
+          />
+          {errors.nome && <ErrorMessageStyled>{errors.nome.message}</ErrorMessageStyled>}
+        </FormGroup>
+
+        <FormGroup>
+          <Label htmlFor="email">Email*</Label>
+          <Input 
+            type="email" 
+            id="email" 
+            {...register('email')} 
+            $hasError={!!errors.email}
+          />
+          {errors.email && <ErrorMessageStyled>{errors.email.message}</ErrorMessageStyled>}
+        </FormGroup>
+
+        <FormGroup>
+          <Label htmlFor="empresa">Empresa*</Label>
+          <Input 
+            type="text" 
+            id="empresa" 
+            {...register('empresa')} 
+            $hasError={!!errors.empresa}
+          />
+          {errors.empresa && <ErrorMessageStyled>{errors.empresa.message}</ErrorMessageStyled>}
+        </FormGroup>
+
+        <FormGroup>
+          <Label htmlFor="ramo">Selecione o ramo da empresa*</Label>
+          <Select 
+            id="ramo" 
+            {...register('ramo')} 
+            $hasError={!!errors.ramo}
+          >
+            <option value="">Selecione...</option>
             <option value="Comércio">Comércio</option>
             <option value="Serviços">Serviços</option>
             <option value="Indústria">Indústria</option>  
@@ -104,64 +134,105 @@ export default function Contato() {
             <option value="Marketing">Marketing</option>
             <option value="Jurídico">Jurídico</option>
             <option value="Consultoria">Consultoria</option>
-          </FormInput>
-           <ErrorMessage>{errors.ramo?.message}</ErrorMessage>
-        </FormField>
-        <FormField>
-          <FormLabel>Telefone*</FormLabel>
-          <FormInput type="tel" placeholder="+55" {...register('telefone')}  hasError={!!errors.telefone} />
-           <ErrorMessage>{errors.telefone?.message}</ErrorMessage>
-        </FormField>
-        <FormField>
-          <FormLabel>Número de funcionários*</FormLabel>
-          <FormInput type="number"  {...register('funcionario')} hasError={!!errors.funcionario} />
-           <ErrorMessage>{errors.funcionario?.message}</ErrorMessage>
-        </FormField>
-         <FormField>
-          <FormLabel>CEP *</FormLabel>
-          <FormInput type="text" {...register('cep')} hasError={!!errors.cep} onBlur={buscarCep}/>
-           <ErrorMessage>{errors.cep?.message}</ErrorMessage>
-        </FormField>
-        <FormField>
-          <FormLabel>Estado*</FormLabel>
-          <FormInput type="text" {...register('estado')}  hasError={!!errors.estado}>
-          </FormInput>
-          <ErrorMessage>{errors.estado?.message}</ErrorMessage>
-        </FormField>
-        <FormField>
-          <FormLabel>Cidade*</FormLabel>
-          <FormInput type="text" {...register('cidade')}  hasError={!!errors.cidade}>
-          </FormInput>
-          <ErrorMessage>{errors.cidade?.message}</ErrorMessage>
-        </FormField>
-        <FormField>
-          <FormLabel>Conte-nos o que está buscando</FormLabel>
-          <FormInput as="textarea" rows="3" {...register('buscando')} />
-        </FormField>
-        <FormButton type="submit">Enviar</FormButton>
-      </ContainerForm>
-      <LinkTextContainer>
-       Já possui uma conta? <Link to="/">Login</Link>
-      </LinkTextContainer>
-    </ContainerPrincipal>
+          </Select>
+          {errors.ramo && <ErrorMessageStyled>{errors.ramo.message}</ErrorMessageStyled>}
+        </FormGroup>
 
-    <div>
-        {
-            listaCliente.map((cli, index) => <div key={index}>
-            <p>Nome: {cli.nome}</p>
-            <p>Email: {cli.email}</p>
-            <p>Empresa: {cli.empresa}</p>
-            <p>Ramo da Empresa: {cli.ramo}</p>
-            <p>Telefone: {cli.telefone}</p>
-            <p>Número de Funcionários: {cli.funcionario}</p>
-            <p>CEP: {cli.cep}</p>
-            <p>Estado: {cli.estado}</p>
-            <p>Cidade: {cli.cidade}</p>
-            <p>Buscando: {cli.buscando}</p>
-        </div>)
-        }
-    </div>
+        <FormGroup>
+          <Label htmlFor="telefone">Telefone*</Label>
+          <PhoneInputContainer>
+            <CountryCode>+55</CountryCode>
+            <PhoneInput 
+              type="tel" 
+              id="telefone" 
+              placeholder="(00) 00000-0000"
+              {...register('telefone')} 
+              $hasError={!!errors.telefone}
+            />
+          </PhoneInputContainer>
+          {errors.telefone && <ErrorMessageStyled>{errors.telefone.message}</ErrorMessageStyled>}
+        </FormGroup>
 
-    </>
+        <FormGroup>
+          <Label htmlFor="funcionario">Número de funcionários*</Label>
+          <Input 
+            type="number" 
+            id="funcionario" 
+            {...register('funcionario')} 
+            $hasError={!!errors.funcionario}
+            min="1"
+          />
+          {errors.funcionario && <ErrorMessageStyled>{errors.funcionario.message}</ErrorMessageStyled>}
+        </FormGroup>
+
+        <FormGroup>
+          <Label htmlFor="cep">CEP*</Label>
+          <Input 
+            type="text" 
+            id="cep" 
+            {...register('cep')} 
+            onBlur={buscarCep}
+            placeholder="00000-000"
+            $hasError={!!errors.cep}
+          />
+          {errors.cep && <ErrorMessageStyled>{errors.cep.message}</ErrorMessageStyled>}
+        </FormGroup>
+
+        <LocationGroup>
+          <FormGroup $flex="1">
+            <Label htmlFor="estado">Estado*</Label>
+            <Input 
+              type="text" 
+              id="estado" 
+              {...register('estado')} 
+              $hasError={!!errors.estado}
+              readOnly
+            />
+            {errors.estado && <ErrorMessageStyled>{errors.estado.message}</ErrorMessageStyled>}
+          </FormGroup>
+          
+          <FormGroup $flex="2">
+            <Label htmlFor="cidade">Cidade*</Label>
+            <Input 
+              type="text" 
+              id="cidade" 
+              {...register('cidade')} 
+              $hasError={!!errors.cidade}
+              readOnly
+            />
+            {errors.cidade && <ErrorMessageStyled>{errors.cidade.message}</ErrorMessageStyled>}
+          </FormGroup>
+        </LocationGroup>
+
+        <FormGroup>
+          <Label htmlFor="buscando">Conte-nos o que está buscando</Label>
+          <TextArea 
+            id="buscando" 
+            rows="4"
+            {...register('buscando')}
+          />
+        </FormGroup>
+
+        <SubmitButton type="submit">Enviar</SubmitButton>
+        
+        {submitStatus === 'success' && (
+          <SuccessMessage>
+            Mensagem enviada com sucesso! Entraremos em contato em breve.
+          </SuccessMessage>
+        )}
+        
+        <LinkText>
+          Já possui uma conta? <Link to="/">Faça login</Link>
+        </LinkText>
+      </Form>
+
+      {/* Seção de depuração - pode ser removida em produção */}
+      {process.env.NODE_ENV === 'development' && listaCliente.length > 0 && (
+        <div style={{ marginTop: '2rem', padding: '1rem', background: '#f5f5f5', borderRadius: '4px' }}>
+          <h3>Dados enviados (debug):</h3>
+          <pre>{JSON.stringify(listaCliente, null, 2)}</pre>
+        </div>
+      )}
+    </FormContainer>
   )
 }

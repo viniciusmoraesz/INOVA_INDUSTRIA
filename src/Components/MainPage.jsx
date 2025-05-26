@@ -1,354 +1,50 @@
 import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
+import {
+  MainContainer,
+  HeroBanner,
+  BannerImage,
+  BannerImg,
+  BannerOverlay,
+  BannerContent,
+  BannerTitle,
+  BannerText,
+  CtaButton,
+  FeaturesSection,
+  SectionHeader,
+  SectionTitle,
+  SectionSubtitle,
+  FeaturesGrid,
+  FeatureCard,
+  FeatureImageContainer,
+  FeatureImage,
+  FeatureContent,
+  FeatureTitle,
+  FeatureDescription,
+  CorporateCta,
+  CtaContent,
+  CtaTitle,
+  CtaText,
+  CtaButtons,
+  PrimaryCta,
+  SecondaryCta,
+  SuccessCasesSection,
+  ClientsSection,
+  StatsSection,
+  StatsGrid,
+  StatItem,
+  StatNumber,
+  StatLabel,
+  ClientsGrid,
+  ClientLogo,
+  CasesGrid,
+  CaseCard,
+  CaseContent,
+  CaseTitle,
+  CaseDescription,
+  CaseIndustry
+} from '../Styles/StyledMainPage';
 
-// CONTAINER - PRINCIPAL - Styles
-const MainContainer = styled.div`
-  font-family: 'Arial', sans-serif;
-  color: #333;
-  max-width: 1400px;
-  margin: 0 auto;
-`;
 
-// 'HERO' - BANNER - Styles
-const HeroBanner = styled.section`
-  position: relative;
-  margin-bottom: 4rem;
-`;
-
-const BannerImage = styled.div`
-  position: relative;
-  width: 100%;
-  height: 500px;
-  overflow: hidden;
-`;
-
-const BannerImg = styled.img`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-`;
-
-const BannerOverlay = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-const BannerContent = styled.div`
-  color: white;
-  text-align: center;
-  max-width: 800px;
-  padding: 2rem;
-`;
-
-const BannerTitle = styled.h1`
-  font-size: 3rem;
-  margin-bottom: 1.5rem;
-  font-weight: 700;
-
-  @media (max-width: 768px) {
-    font-size: 2.2rem;
-  }
-
-  @media (max-width: 480px) {
-    font-size: 1.8rem;
-  }
-`;
-
-const BannerText = styled.p`
-  font-size: 1.2rem;
-  margin-bottom: 2rem;
-  line-height: 1.6;
-
-  @media (max-width: 768px) {
-    font-size: 1rem;
-  }
-`;
-
-const CtaButton = styled.button`
-  background: #0066cc;
-  color: white;
-  border: none;
-  padding: 12px 30px;
-  font-size: 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.3s;
-
-  &:hover {
-    background: #0052a3;
-  }
-`;
-
-// Features - EXIBIÇÃO - Styles
-const FeaturesSection = styled.section`
-  padding: 0 2rem 4rem;
-  text-align: center;
-`;
-
-const SectionHeader = styled.div`
-  margin-bottom: 3rem;
-`;
-
-const SectionTitle = styled.h2`
-  font-size: 2.2rem;
-  margin-bottom: 1rem;
-  color: #222;
-`;
-
-const SectionSubtitle = styled.p`
-  font-size: 1.1rem;
-  color: #666;
-  margin-bottom: 3rem;
-  max-width: 700px;
-  margin-left: auto;
-  margin-right: auto;
-`;
-
-const FeaturesGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 2rem;
-  margin-top: 2rem;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  @media (max-width: 480px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const FeatureCard = styled.div`
-  background: white;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s, box-shadow 0.3s;
-
-  &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-  }
-`;
-
-const FeatureImageContainer = styled.div`
-  height: 200px;
-  overflow: hidden;
-`;
-
-const FeatureImage = styled.img`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.5s;
-
-  ${FeatureCard}:hover & {
-    transform: scale(1.05);
-  }
-`;
-
-const FeatureContent = styled.div`
-  padding: 1.5rem;
-  text-align: left;
-`;
-
-const FeatureTitle = styled.h3`
-  font-size: 1.3rem;
-  margin-bottom: 0.8rem;
-  color: #0066cc;
-`;
-
-const FeatureDescription = styled.p`
-  color: #666;
-  line-height: 1.5;
-`;
-
-// CTA - CORPORAÇÃO - Styles
-const CorporateCta = styled.section`
-  background: #f8f9fa;
-  padding: 4rem 2rem;
-  text-align: center;
-  margin-top: 2rem;
-`;
-
-const CtaContent = styled.div`
-  max-width: 800px;
-  margin: 0 auto;
-`;
-
-const CtaTitle = styled.h2`
-  font-size: 2rem;
-  margin-bottom: 1.5rem;
-  color: #222;
-`;
-
-const CtaText = styled.p`
-  font-size: 1.1rem;
-  color: #555;
-  margin-bottom: 2rem;
-  line-height: 1.6;
-`;
-
-const CtaButtons = styled.div`
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-    align-items: center;
-  }
-`;
-
-const PrimaryCta = styled.button`
-  background: #0066cc;
-  color: white;
-  border: none;
-  padding: 12px 30px;
-  font-size: 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.3s;
-
-  &:hover {
-    background: #0052a3;
-  }
-`;
-
-const SecondaryCta = styled.button`
-  background: white;
-  color: #0066cc;
-  border: 1px solid #0066cc;
-  padding: 12px 30px;
-  font-size: 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.3s;
-
-  &:hover {
-    background: #f0f7ff;
-  }
-`;
-
-// Novos componentes para as seções de API
-const SuccessCasesSection = styled.section`
-  background: #f0f7ff;
-  padding: 4rem 2rem;
-  text-align: center;
-`;
-
-const ClientsSection = styled.section`
-  padding: 4rem 2rem;
-  background: white;
-  text-align: center;
-`;
-
-const StatsSection = styled.section`
-  background: #0066cc;
-  color: white;
-  padding: 4rem 2rem;
-  text-align: center;
-`;
-
-const StatsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 2rem;
-  margin-top: 3rem;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  @media (max-width: 480px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const StatItem = styled.div`
-  padding: 1.5rem;
-`;
-
-const StatNumber = styled.div`
-  font-size: 2.5rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-`;
-
-const StatLabel = styled.div`
-  font-size: 1.1rem;
-  opacity: 0.9;
-`;
-
-const ClientsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 2rem;
-  align-items: center;
-  margin-top: 3rem;
-`;
-
-const ClientLogo = styled.img`
-  max-width: 150px;
-  max-height: 80px;
-  width: auto;
-  height: auto;
-  filter: grayscale(100%);
-  opacity: 0.7;
-  transition: all 0.3s;
-
-  &:hover {
-    filter: grayscale(0%);
-    opacity: 1;
-  }
-`;
-
-const CasesGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
-  margin-top: 3rem;
-`;
-
-const CaseCard = styled.div`
-  background: white;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-`;
-
-const CaseContent = styled.div`
-  padding: 1.5rem;
-  text-align: left;
-`;
-
-const CaseTitle = styled.h3`
-  color: #0066cc;
-  margin-bottom: 0.8rem;
-`;
-
-const CaseDescription = styled.p`
-  color: #666;
-  margin-bottom: 1rem;
-`;
-
-const CaseIndustry = styled.span`
-  display: inline-block;
-  background: #f0f7ff;
-  color: #0066cc;
-  padding: 0.3rem 0.8rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  margin-right: 0.5rem;
-`;
 
 // Simulações de API
 const fetchSuccessCases = async () => {
@@ -376,58 +72,37 @@ const fetchSuccessCases = async () => {
           title: "Plataforma de Dados Financeiros",
           description: "Desenvolvimento de plataforma de análise de dados para instituição financeira, melhorando a tomada de decisões estratégicas.",
           industry: "Finanças",
-          results: "50% mais rápido na análise",
-          imageUrl: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
         }
       ]);
-    }, 800);
+    }, 1000);
   });
 };
 
 const fetchClients = async () => {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     setTimeout(() => {
       resolve([
-        { 
-          id: 1, 
-          name: "Empresa A", 
-          logo: "https://via.placeholder.com/150x80?text=Empresa+A" 
-        },
-        { 
-          id: 2, 
-          name: "Empresa B", 
-          logo: "https://via.placeholder.com/150x80?text=Empresa+B" 
-        },
-        { 
-          id: 3, 
-          name: "Empresa C", 
-          logo: "https://via.placeholder.com/150x80?text=Empresa+C" 
-        },
-        { 
-          id: 4, 
-          name: "Empresa D", 
-          logo: "https://via.placeholder.com/150x80?text=Empresa+D" 
-        },
-        { 
-          id: 5, 
-          name: "Empresa E", 
-          logo: "https://via.placeholder.com/150x80?text=Empresa+E" 
-        }
+        'https://via.placeholder.com/150x80?text=Cliente+1',
+        'https://via.placeholder.com/150x80?text=Cliente+2',
+        'https://via.placeholder.com/150x80?text=Cliente+3',
+        'https://via.placeholder.com/150x80?text=Cliente+4',
+        'https://via.placeholder.com/150x80?text=Cliente+5',
+        'https://via.placeholder.com/150x80?text=Cliente+6'
       ]);
-    }, 600);
+    }, 1000);
   });
 };
 
 const fetchStats = async () => {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     setTimeout(() => {
       resolve([
-        { id: 1, value: "150+", label: "Clientes Satisfeitos" },
-        { id: 2, value: "95%", label: "Taxa de Retenção" },
-        { id: 3, value: "40+", label: "Prêmios Industriais" },
-        { id: 4, value: "500M", label: "Em Economia Gerada" }
+        { id: 1, value: 150, label: "Projetos Concluídos" },
+        { id: 2, value: 85, label: "Clientes Atendidos" },
+        { id: 3, value: 24, label: "Especialistas" },
+        { id: 4, value: 8, label: "Anos de Experiência" }
       ]);
-    }, 500);
+    }, 800);
   });
 };
 

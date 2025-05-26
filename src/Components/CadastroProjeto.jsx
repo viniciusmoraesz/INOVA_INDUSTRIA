@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FaSearch, FaUser, FaCalendarAlt, FaTrash, FaPlus } from 'react-icons/fa';
+import { FaUser, FaCalendarAlt, FaTrash, FaPlus } from 'react-icons/fa'; // Removido FaSearch
 
 import exemplo2 from '../assets/exemplo2.jpg';
 import exemplo3 from '../assets/exemplo3.jpg';
@@ -29,6 +29,7 @@ const initialProjects = [
   { id: 7, name: 'Plataforma de Sustentabilidade', owner: 'ByteForge', date: '15/05/2025', progress: 80, status: 'Em andamento', image: exemplo7 },
   { id: 8, name: 'Sistema de Gerenciamento', owner: 'EcoNest', date: '01/01/2025', progress: 95, status: 'Em andamento', image: exemplo8 },
   { id: 9, name: 'Aplicativo de Gestão Tecnologico', owner: 'VortexDynamics', date: '02/03/2025', progress: 70, status: 'Em andamento', image: exemplo9 },
+  { id: 10, name: 'Solução em IoT Industrial', owner: 'TechNova Industries', date: '20/11/2025', progress: 35, status: 'Em andamento', image: exemplo2 },
 ];
 
 export default function CadastroProjeto() {
@@ -80,10 +81,7 @@ export default function CadastroProjeto() {
     <Container>
       <Sidebar>
         <h3>Pesquisar</h3>
-        <div style={{ 
-          position: 'relative',
-          marginBottom: '1rem'
-        }}>
+        <div style={{ marginBottom: '1rem' }}>
           <SearchInput 
             type="text" 
             placeholder="Buscar projeto..." 
@@ -91,16 +89,6 @@ export default function CadastroProjeto() {
             onChange={(e) => setSearchTerm(e.target.value)}
             aria-label="Buscar projeto"
           />
-          <FaSearch style={{
-            position: 'absolute',
-            right: '0.8rem',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            color: '#a0aec0',
-            fontSize: '0.85rem',
-            pointerEvents: 'none',
-            opacity: 0.8
-          }} />
         </div>
 
         <Link to="/adicionar-projetos" style={{ textDecoration: 'none', width: '100%' }}>

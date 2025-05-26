@@ -1,96 +1,160 @@
-import styled from "styled-components";
+import styled from 'styled-components';
 
-export const ContainerPrincipal = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background-color: #043f5d;
-  color: white;
-  padding: 40px;
-  border-radius: 20px;
-  max-width: 450px;
-  margin-top: 20px;
-  margin-left: 700px;
-  margin-bottom: 20px;
-  gap: 30px;
-
-  h1 {
-    font-size: 20px;
-    color: white;
-  }
-`;
-
-export const ContainerForm = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  width: 100%;
-`;
-
-export const FormLabel = styled.label`
-  margin-bottom: 10px;
-  font-weight: bold;
-`;
-
-export const FormInput = styled.input`
-  padding: 10px;
-  border-radius: 5px;
-  border: 2px solid ${props => (props.hasError ? 'red' : 'transparent')};
-  font-size: 14px;
-  width: 100%;
-  outline: none;
-
-  &:focus {
-    border-color: ${props => (props.hasError ? 'red' : '#59c3c3')};
-  }
-`;
-
-
-FormInput.defaultProps = {
-  as: "input"
-};
-
-
-
-export const FormButton = styled.button`
-  background-color: #59c3c3;
-  color: #fff;
-  padding: 12px;
-  border: none;
+export const FormContainer = styled.div`
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: #f9f9f9;
   border-radius: 8px;
-  font-weight: bold;
-  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+`;
 
-  &:hover {
-    background-color: #47b0b0;
+export const Title = styled.h1`
+  font-size: 1.8rem;
+  color: #333;
+  margin-bottom: 2rem;
+  text-align: center;
+`;
+
+export const Form = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+`;
+
+export const FormGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: ${props => props.$flex || 'initial'};
+`;
+
+export const LocationGroup = styled.div`
+  display: flex;
+  gap: 1rem;
+  
+  @media (max-width: 600px) {
+    flex-direction: column;
+    gap: 1.5rem;
   }
 `;
 
-export const LinkTextContainer = styled.p`
-  color: white;
+export const Label = styled.label`
+  font-weight: 600;
+  color: #444;
+`;
+
+export const Input = styled.input`
+  padding: 0.8rem;
+  border: 1px solid ${props => props.$hasError ? '#e74c3c' : '#ddd'};
+  border-radius: 4px;
   font-size: 1rem;
-  margin-top: 15px;
+  transition: border-color 0.3s;
+  
+  &:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+  }
+`;
+
+export const Select = styled.select`
+  padding: 0.8rem;
+  border: 1px solid ${props => props.$hasError ? '#e74c3c' : '#ddd'};
+  border-radius: 4px;
+  font-size: 1rem;
+  background-color: white;
+  transition: border-color 0.3s;
+  
+  &:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+  }
+`;
+
+export const TextArea = styled.textarea`
+  padding: 0.8rem;
+  border: 1px solid ${props => props.$hasError ? '#e74c3c' : '#ddd'};
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: border-color 0.3s;
+  
+  &:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+  }
+`;
+
+export const PhoneInputContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+export const CountryCode = styled.span`
+  padding: 0.8rem;
+  background-color: #eee;
+  border: 1px solid #ddd;
+  border-radius: 4px 0 0 4px;
+`;
+
+export const PhoneInput = styled(Input)`
+  flex: 1;
+  border-radius: 0 4px 4px 0;
+`;
+
+export const SubmitButton = styled.button`
+  padding: 1rem;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  
+  &:hover {
+    background-color: #2980b9;
+  }
+  
+  &:disabled {
+    background-color: #95a5a6;
+    cursor: not-allowed;
+  }
+`;
+
+export const ErrorMessage = styled.span`
+  color: #e74c3c;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+`;
+
+export const SuccessMessage = styled.div`
+  padding: 1rem;
+  background-color: #2ecc71;
+  color: white;
+  border-radius: 4px;
   text-align: center;
+  margin-top: 1rem;
+`;
 
+export const LinkText = styled.div`
+  margin-top: 1.5rem;
+  text-align: center;
+  color: #666;
+  font-size: 0.9rem;
+  
   a {
-    color: #61c3cc;
-    font-weight: bold;
+    color: #3498db;
     text-decoration: none;
-
+    font-weight: 600;
+    
     &:hover {
       text-decoration: underline;
     }
   }
-`;
-
-export const FormField = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0px; 
-`;
-
-export const ErrorMessage = styled.span`
-  color: red;
-  font-size: 0.875rem;
-  margin-top: 4px;
 `;
