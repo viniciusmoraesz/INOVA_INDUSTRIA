@@ -78,7 +78,7 @@ const Header = () => {
       <Navbar>
         <div>
           <a href=".">
-            <Logo src="../../src/assets/firefox_8rEIgyiZ1r.png" alt="logo" />
+            <Logo src="../../src/assets/LOGO.png" alt="logo" />
           </a>
         </div>
         

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FaUser, FaCalendarAlt, FaTrash, FaPlus } from 'react-icons/fa'; // Removido FaSearch
+import { FaUser, FaCalendarAlt, FaTrash, FaPlus, FaArrowLeft } from 'react-icons/fa'; // Removido FaSearch
 
 import exemplo2 from '../assets/exemplo2.jpg';
 import exemplo3 from '../assets/exemplo3.jpg';
@@ -100,7 +100,15 @@ export default function CadastroProjeto() {
       </Sidebar>
 
       <Content>
-        <Header>Painel de Projetos</Header>
+        <Header>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
+            <Link to="/main-page" style={{ textDecoration: 'none', color: '#64748b' }}>
+              <FaArrowLeft style={{ marginRight: '0.3rem', fontSize: '0.85rem' }} />
+              <span>Voltar para a página inicial</span>
+            </Link>
+          </div>
+          Painel de Projetos
+        </Header>
 
         <FilterContainer>
           {['Todos', 'Em andamento', 'Em planejamento', 'Concluído'].map(status => (

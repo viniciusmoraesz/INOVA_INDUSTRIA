@@ -1,5 +1,6 @@
 import { Outlet, useLocation } from "react-router-dom";
 import { useEffect } from 'react';
+import Header from "./Components/Header";
 
 function App() {
   const location = useLocation();
@@ -11,7 +12,10 @@ function App() {
 
   return (
     <div className="app" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <Outlet />
+      {location.pathname !== '/' && location.pathname !== '/contato' && <Header />}
+      <div style={{ marginTop: location.pathname !== '/' ? '80px' : '0' }}>
+        <Outlet />
+      </div>
     </div>
   );
 }

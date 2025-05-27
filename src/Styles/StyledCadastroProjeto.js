@@ -21,6 +21,7 @@ export const Sidebar = styled.div`
   padding: 1.5rem;
   box-shadow: 0 2px 5px rgba(0,0,0,0.3);
   z-index: 10;
+  margin-top: 10px;
   
   h3 {
     color: #e2e8f0;
@@ -48,7 +49,7 @@ export const Sidebar = styled.div`
   
   @media (min-width: 768px) {
     position: fixed;
-    top: 0;
+    top: 80px;
     left: 0;
     height: 100vh;
     width: 280px;

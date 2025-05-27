@@ -4,7 +4,10 @@ export const HeaderContainer = styled.header`
   background-color: white;
   color: #0F3F63;
   padding: 1rem 0;
-  position: relative;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   width: 100%;
   box-sizing: border-box;
@@ -21,8 +24,8 @@ export const Navbar = styled.nav`
 `;
 
 export const Logo = styled.img`
-  width: 5rem;
-  height: 4rem;
+  width: 3rem;
+  height: 3rem;
 `;
 
 export const HamburgerButton = styled.button`
