@@ -21,7 +21,7 @@ const AppRouter = () => {
         <Route path="contato" element={<Contato />} />
         <Route path="cadastro-projetos" element={<CadastroProjeto />} />
         <Route path="adicionar-projetos" element={<AdicionarProjeto />} />
-        <Route path="adicionar-atividades" element={<AdicionarAtividade />} />
+        <Route path="projeto/:id/nova-atividade" element={<AdicionarAtividade />} />
         <Route path="adicionar-subAtividades" element={<AdicionarSubAtividade />} />
         <Route path="projeto/:id" element={<PaginaCadaProjeto />} />
         <Route path="main-page" element={<MainPage />} />

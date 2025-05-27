@@ -222,9 +222,9 @@ export default function PaginaCadaProjeto() {
             <FaTasks style={{ marginRight: '0.5rem' }} />
             Atividades
           </SectionTitle>
-          <ActionButton small>
+          <Link to={`/projeto/${id}/nova-atividade`} className="action-button">
             <FaPlus style={{ marginRight: '0.5rem' }} /> Nova Atividade
-          </ActionButton>
+          </Link>
         </SectionHeader>
         <SectionContent>
           <TaskList>
