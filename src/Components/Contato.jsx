@@ -145,7 +145,7 @@ export default function Contato() {
             <PhoneInput 
               type="tel" 
               id="telefone" 
-              placeholder="(00) 00000-0000"
+              placeholder="+55 (00) 00000-0000"
               {...register('telefone')} 
               $hasError={!!errors.telefone}
             />

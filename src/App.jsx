@@ -1,6 +1,7 @@
 import { Outlet, useLocation } from "react-router-dom";
 import { useEffect } from 'react';
 import Header from "./Components/Header";
+import Chatbot from "./Components/Chatbot";
 
 function App() {
   const location = useLocation();
@@ -16,6 +17,7 @@ function App() {
       <div style={{ marginTop: location.pathname !== '/' ? '80px' : '0' }}>
         <Outlet />
       </div>
+      <Chatbot />
     </div>
   );
 }

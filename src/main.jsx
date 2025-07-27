@@ -1,5 +1,10 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+
+console.log('Variáveis de ambiente carregadas:', {
+  hasHuggingFaceKey: !!import.meta.env.VITE_HUGGINGFACE_API_KEY,
+  mode: import.meta.env.MODE
+});
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import App from './App.jsx';
 import Login from './Components/Login.jsx';
@@ -38,4 +43,4 @@ createRoot(document.getElementById('root')).render(
       <AppRouter />
     </Router>
   </StrictMode>
-);
+);c
