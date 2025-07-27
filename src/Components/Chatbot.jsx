@@ -10,26 +10,6 @@ import {
   SendButton 
 } from '../Styles/StyledChatbot';
 import { FaPaperPlane, FaRobot, FaTimes } from 'react-icons/fa';
-// Configurações da API
-const API_CONFIG = {
-  model: 'gpt2',
-  apiUrl: 'https://api-inference.huggingface.co/models/gpt2',
-  // Acessa a chave do window.ENV que é carregado pelo env-config.js
-  apiKey: window.ENV?.VITE_HUGGINGFACE_API_KEY || ''
-};
-
-// Log para depuração
-console.log('Configuração da API:', {
-  hasApiKey: !!API_CONFIG.apiKey,
-  apiUrl: API_CONFIG.apiUrl,
-  env: window.ENV ? 'ENV carregado' : 'ENV não carregado',
-  envKeys: window.ENV ? Object.keys(window.ENV) : []
-});
-
-// Verifica se a chave da API está disponível
-if (!API_CONFIG.apiKey) {
-  console.error('ERRO: Chave da API não encontrada. Verifique se o arquivo env-config.js está configurado corretamente.');
-}
 
 const Chatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -37,136 +17,94 @@ const Chatbot = () => {
     { text: 'Olá! Sou o assistente virtual do Inova Indústria. Como posso ajudar?', sender: 'bot' }
   ]);
   const [inputValue, setInputValue] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  // Loga as configurações de ambiente quando o componente for montado
-  useEffect(() => {
-    console.log('=== DEBUG - Verificando configurações ===');
-    console.log('Chave da API presente?', API_CONFIG.apiKey ? 'Sim' : 'Não');
-    console.log('URL da API:', API_CONFIG.apiUrl);
+  const getBotResponse = (userInput) => {
+    const input = userInput.toLowerCase().trim();
     
-    // Verifica se o arquivo env-config.js foi carregado corretamente
-    if (!window.ENV) {
-      console.error('ERRO: window.ENV não está definido. Verifique se o arquivo env-config.js está sendo carregado corretamente.');
-    } else {
-      console.log('Arquivo env-config.js carregado com sucesso');
+    // Saudações
+    if (input === 'oi' || input === 'olá' || input === 'ola' || input === 'eai' || input === 'e aí') {
+      return 'Olá! Bem-vindo à Inova Indústria! Como posso te ajudar hoje?';
     }
-  }, []);
+    
+    // Sobre o assistente
+    if (input.includes('quem é você') || input.includes('qual seu nome') || input.includes('vc é')) {
+      return 'Sou o assistente virtual da Inova Indústria, especializado em ajudar com informações sobre nossos projetos de inovação industrial, automação e soluções tecnológicas para o setor!';
+    }
+    
+    // Sobre a Inova Indústria
+    if (input.includes('inova indústria') || input.includes('sobre a empresa') || input.includes('quem somos')) {
+      return 'A Inova Indústria é especializada em soluções tecnológicas para o setor industrial, focada em inovação, automação e eficiência operacional. Nossos projetos incluem:\n\n- Automação de processos industriais\n- Desenvolvimento de soluções IoT\n- Integração de sistemas\n- Consultoria em Indústria 4.0\n\nComo posso te ajudar hoje?';
+    }
+    
+    // Projetos
+    if (input.includes('projeto') || input.includes('solução') || input.includes('sistema')) {
+      return 'Nossos principais projetos incluem:\n\n🔹 Automação Industrial - Soluções completas para automação de linhas de produção\n🔹 Monitoramento IoT - Acompanhamento em tempo real de máquinas e processos\n🔹 Manutenção Preditiva - Redução de paradas não programadas\n🔹 Controle de Qualidade - Sistemas avançados de inspeção\n\nGostaria de saber mais sobre algum projeto específico?';
+    }
+    
+    // Ajuda
+    if (input === 'ajuda' || input === 'help' || input === 'comandos') {
+      return 'Posso te ajudar com: \n- Informações sobre nossos projetos\n- Soluções industriais\n- Automação e tecnologia\n- Contato com nossa equipe\n- Suporte técnico\n\nNo que posso ajudar hoje?';
+    }
+    
+    // Contato
+    if (input.includes('contato') || input.includes('email') || input.includes('telefone') || input.includes('falar com')) {
+      return 'Entre em contato com nossa equipe de especialistas:\n\n📧 Email: contato@inovaindustria.com.br\n📞 Telefone: (11) 4002-8922\n💬 WhatsApp: (11) 98765-4321\n📍 Av. Paulista, 1000 - São Paulo/SP\n\nHorário de atendimento: Seg-Sex, 8h às 18h';
+    }
+    
+    // Localização
+    if (input.includes('onde fica') || input.includes('endereço') || input.includes('localização')) {
+      return 'Nossa sede fica em São Paulo:\n\n🏢 Av. Paulista, 1000 - Bela Vista\nSão Paulo - SP, 01310-100\n\nPróximo ao metrô Trianon-MASP\nEstacionamento próprio disponível';
+    }
+    
+    // Horário de atendimento
+    if (input.includes('horário') || input.includes('horario') || input.includes('aberto') || input.includes('funciona')) {
+      return 'Horário de funcionamento:\n\n🕗 Segunda a Sexta: 8h às 18h\n🕘 Sábado: 9h às 13h (atendimento agendado)\n❌ Domingo: Fechado\n\nPara emergências, entre em contato pelo WhatsApp (11) 98765-4321';
+    }
+    
+    // Produtos e Serviços
+    if (input.includes('produto') || input.includes('serviço') || input.includes('servico') || input.includes('solução')) {
+      return 'Nossas principais soluções incluem:\n\n🤖 Automação Industrial\n- Robótica colaborativa\n- Sistemas de controle\n- CLPs e IHM\n\n📊 IoT Industrial\n- Sensores inteligentes\n- Monitoramento remoto\n- Análise de dados\n\n🛠️ Manutenção\n- Preditiva\n- Preventiva\n- Corretiva\n\nDeseja mais informações sobre alguma solução específica?';
+    }
+    
+    // Carreira/Vagas
+    if (input.includes('trabalhar') || input.includes('vaga') || input.includes('carreira') || input.includes('emprego')) {
+      return 'Trabalhe conosco!\n\nEstamos sempre em busca de talentos para fazer parte do nosso time. As vagas abertas são divulgadas em:\n\n🔗 www.inovaindustria.com.br/trabalhe-conosco\n\nVocê também pode enviar seu currículo para: rh@inovaindustria.com.br';
+    }
+    
+    // Parceiros
+    if (input.includes('parceiro') || input.includes('parceria') || input.includes('fornecedor')) {
+      return 'Trabalhamos com os melhores parceiros do mercado para oferecer soluções completas. Principais áreas de parceria:\n\n🤝 Fornecedores de equipamentos\n💼 Integradores de sistemas\n🏭 Indústrias\n\nPara se tornar um parceiro, envie um email para: parcerias@inovaindustria.com.br';
+    }
+    
+    // Agradecimento
+    if (input.includes('obrigad') || input === 'valeu' || input === 'obg' || input === 'obrigado' || input === 'obrigada') {
+      return 'Por nada! Fico feliz em ajudar. Se precisar de mais alguma informação, estou à disposição! 😊';
+    }
+    
+    // Despedidas
+    if (input === 'tchau' || input === 'adeus' || input === 'até mais' || input === 'ate mais' || input === 'flw') {
+      return 'Até mais! Foi um prazer ajudar. Lembre-se que estou à disposição para qualquer dúvida. Tenha um excelente dia! 👋';
+    }
+    
+    // Resposta padrão caso não encontre correspondência
+    return 'Desculpe, não entendi completamente. Poderia reformular sua pergunta? Estou aqui para ajudar com informações sobre a Inova Indústria, produtos, serviços e muito mais!';
+  };
 
-  // Verificação de inicialização
-  useEffect(() => {
-    console.log('Variáveis de ambiente carregadas:', {
-      hasApiKey: !!import.meta.env.VITE_HUGGINGFACE_API_KEY,
-      nodeEnv: import.meta.env.MODE
-    });
-  }, []);
-
-  const handleSendMessage = async (e) => {
+  const handleSendMessage = (e) => {
     e.preventDefault();
-    if (!inputValue.trim() || isLoading) return;
+    if (!inputValue.trim()) return;
 
     // Adiciona mensagem do usuário
     const userMessage = { text: inputValue, sender: 'user' };
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
-    setIsLoading(true);
     
-    // Log para depuração
-    console.log('Chave da API:', API_CONFIG.apiKey ? 'Presente' : 'Ausente');
-
-    try {
-      // Respostas pré-definidas
-      const defaultResponses = {
-        'oi': 'Olá! Como posso ajudar você hoje?',
-        'qual seu nome': 'Sou o assistente virtual da Inova Indústria!',
-        'ajuda': 'Posso ajudar com informações sobre nossos produtos e serviços. O que você gostaria de saber?',
-        'contato': 'Você pode entrar em contato pelo email: contato@inovaindustria.com.br'
-      };
-
-      // Verifica se há uma resposta pré-definida exata
-      const lowerInput = inputValue.toLowerCase();
-      const defaultResponse = defaultResponses[lowerInput];
-      
-      if (defaultResponse) {
-        // Usa resposta pré-definida se existir
-        setTimeout(() => {
-          setMessages(prev => [...prev, { text: defaultResponse, sender: 'bot' }]);
-          setIsLoading(false);
-        }, 500);
-        return;
-      }
-
-      // Se não houver correspondência exata, chama a API do Hugging Face
-      console.log('Chamando API do Hugging Face...');
-      
-      // Respostas locais para fallback
-      const fallbackResponses = {
-        'oi': 'Olá! Estou processando sua mensagem...',
-        'default': 'Estou processando sua solicitação. Por favor, aguarde um momento...'
-      };
-      
-      // Resposta temporária enquanto carrega
-      let botResponse = fallbackResponses[lowerInput] || fallbackResponses.default;
-      
-      try {
-        console.log('Tentando conectar à API com URL:', API_CONFIG.apiUrl);
-        
-        if (!API_CONFIG.apiKey) {
-          throw new Error('Chave da API não encontrada. Verifique se o arquivo env-config.js está configurado corretamente.');
-        }
-        
-        console.log('Chave da API carregada com sucesso');
-        console.log('Tipo da chave:', typeof API_CONFIG.apiKey);
-        console.log('Tamanho da chave:', API_CONFIG.apiKey.length);
-        console.log('Início da chave:', API_CONFIG.apiKey.substring(0, 5) + '...');
-        
-        const response = await fetch(API_CONFIG.apiUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${API_CONFIG.apiKey}`,
-            'Accept': 'application/json' // Adicionando header Accept
-          },
-          body: JSON.stringify({
-            inputs: inputValue,
-            parameters: {
-              max_length: 100,
-              temperature: 0.7,
-              do_sample: true,
-              return_full_text: false // Adicionando parâmetro recomendado
-            },
-            options: {
-              use_cache: true,
-              wait_for_model: true
-            }
-          })
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          console.error('Detalhes do erro da API:', errorData);
-          throw new Error(`Erro na API (${response.status}): ${response.statusText}`);
-        }
-
-        const [result] = await response.json();
-        botResponse = result?.generated_text || 'Não consegui gerar uma resposta adequada.';
-        
-      } catch (error) {
-        console.error('Erro ao chamar a API:', error);
-        botResponse = 'Desculpe, estou com dificuldades técnicas. Tente novamente mais tarde.';
-      }
-      
+    // Processa a resposta do bot
+    setTimeout(() => {
+      const botResponse = getBotResponse(inputValue);
       setMessages(prev => [...prev, { text: botResponse, sender: 'bot' }]);
-    } catch (error) {
-      console.error('Erro ao processar a mensagem:', error);
-      setMessages(prev => [...prev, { 
-        text: 'Desculpe, estou com dificuldades no momento. Você pode tentar novamente ou perguntar de outra forma.', 
-        sender: 'bot' 
-      }]);
-    } finally {
-      setIsLoading(false);
-    }
+    }, 500);
   };
 
   const scrollToBottom = () => {
@@ -190,7 +128,9 @@ const Chatbot = () => {
           <MessageList>
             {messages.map((msg, index) => (
               <Message key={index} className={msg.sender}>
-                {msg.text}
+                {msg.text.split('\n').map((line, i) => (
+                  <div key={i}>{line}</div>
+                ))}
               </Message>
             ))}
             <div ref={messagesEndRef} />
@@ -202,10 +142,9 @@ const Chatbot = () => {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder="Digite sua mensagem..."
-                disabled={isLoading}
               />
-              <SendButton type="submit" disabled={isLoading}>
-                {isLoading ? '...' : <FaPaperPlane />}
+              <SendButton type="submit">
+                <FaPaperPlane />
               </SendButton>
             </InputArea>
           </form>
