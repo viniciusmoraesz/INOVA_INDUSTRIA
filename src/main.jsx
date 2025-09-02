@@ -17,6 +17,11 @@ import AdicionarSubAtividade from './Components/AdicionarSubAtividade.jsx';
 import PaginaCadaProjeto from './Components/PaginaCadaProjeto.jsx';
 import MainPage from './Components/MainPage.jsx';
 import Header from './Components/Header.jsx';
+import Usuariosrh from './Components/Usuariosrh.jsx';
+import EditUserPage from './Components/EditUserPage.jsx';
+import CadastrarCliente from './Components/CadastrarCliente.jsx';
+import CadastrarEmpresa from './Components/CadastrarEmpresa.jsx';
+import Empresas from './Components/Empresas.jsx';
 
 const AppRouter = () => {
   return (
@@ -31,6 +36,11 @@ const AppRouter = () => {
         <Route path="projeto/:id" element={<PaginaCadaProjeto />} />
         <Route path="main-page" element={<MainPage />} />
         <Route path="header" element={<Header />} />
+        <Route path="usuariosrh" element={<Usuariosrh />} />
+        <Route path="usuariosrh/editar/:userId" element={<EditUserPage />} />
+        <Route path="clientes/novo" element={<CadastrarCliente />} />
+        <Route path="empresas" element={<Empresas />} />
+        <Route path="empresas/nova" element={<CadastrarEmpresa />} />
       </Route>
     </Routes>
   );
@@ -43,4 +53,4 @@ createRoot(document.getElementById('root')).render(
       <AppRouter />
     </Router>
   </StrictMode>
-);c
+);

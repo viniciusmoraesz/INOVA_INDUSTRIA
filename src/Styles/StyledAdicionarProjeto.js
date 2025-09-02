@@ -196,3 +196,22 @@ export const DateRangeInput = styled(DateInput)`
 export const DateRangeError = styled(ErrorMessage)`
   margin-top: 0.25rem;
 `;
+
+export const LoadingMessage = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 2rem;
+  font-size: 1.1rem;
+  color: #666;
+  
+  svg {
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;

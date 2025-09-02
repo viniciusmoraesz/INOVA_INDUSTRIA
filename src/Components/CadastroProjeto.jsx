@@ -1,16 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { FaUser, FaCalendarAlt, FaTrash, FaPlus, FaArrowLeft } from 'react-icons/fa'; // Removido FaSearch
+import { Link, useNavigate } from 'react-router-dom';
+import { FaUser, FaCalendarAlt, FaTrash, FaPlus, FaArrowLeft, FaSpinner } from 'react-icons/fa';
+import { format } from 'date-fns';
+import ptBR from 'date-fns/locale/pt-BR';
 
-import exemplo2 from '../assets/exemplo2.jpg';
-import exemplo3 from '../assets/exemplo3.jpg';
-import exemplo4 from '../assets/exemplo4.png';
-import exemplo5 from '../assets/exemplo5.png';
-import exemplo6 from '../assets/exemplo6.jpg';
-import exemplo7 from '../assets/exemplo7.jpg';
-import exemplo8 from '../assets/exemplo8.jpg';
-import exemplo9 from '../assets/exemplo9.jpg';
-import exemplo1 from '../assets/exemplo1.jpg';
+// Serviços
+import { projetoService } from '../services/projetoService';
+import { empresaService } from '../services/empresaService';
+import { clienteService } from '../services/clienteService';
 
 import { 
   Container, Header, AddButton, ProjectGrid, ProjectCard, ProjectTitle, 
@@ -19,18 +16,25 @@ import {
   ModalOverlay, ModalContent, ModalTitle, ModalMessage, ModalActions, CancelButton, ConfirmButton
 } from '../Styles/StyledCadastroProjeto';
 
-const initialProjects = [
-  { id: 1, name: 'Plataforma de Automação', owner: 'Nexora Tech', date: '06/07/2025', progress: 53, status: 'Em andamento', image: exemplo1 },
-  { id: 2, name: 'Sistema de Monitoramento', owner: 'GreenLeaf Solutions', date: '15/08/2025', progress: 20, status: 'Em planejamento', image: exemplo2 },
-  { id: 3, name: 'Plataforma de Telemedicina', owner: 'UrbanWave', date: '30/09/2025', progress: 78, status: 'Em andamento', image: exemplo3 },
-  { id: 4, name: 'Rebranding Marca Software', owner: 'BrandX', date: '01/10/2025', progress: 100, status: 'Concluído', image: exemplo4 },
-  { id: 5, name: 'Software de Modelagem', owner: 'AstraMed', date: '07/06/2025', progress: 100, status: 'Concluído', image: exemplo5 },
-  { id: 6, name: 'Ferramenta de Desenvolvimento', owner: 'Skyline Architects', date: '12/10/2025', progress: 18, status: 'Em planejamento', image: exemplo6 },
-  { id: 7, name: 'Plataforma de Sustentabilidade', owner: 'ByteForge', date: '15/05/2025', progress: 80, status: 'Em andamento', image: exemplo7 },
-  { id: 8, name: 'Sistema de Gerenciamento', owner: 'EcoNest', date: '01/01/2025', progress: 95, status: 'Em andamento', image: exemplo8 },
-  { id: 9, name: 'Aplicativo de Gestão Tecnologico', owner: 'VortexDynamics', date: '02/03/2025', progress: 70, status: 'Em andamento', image: exemplo9 },
-  { id: 10, name: 'Solução em IoT Industrial', owner: 'TechNova Industries', date: '20/11/2025', progress: 35, status: 'Em andamento', image: exemplo2 },
-];
+// Mapeamento de status para exibição amigável
+const statusMap = {
+  'rascunho': 'Rascunho',
+  'planejamento': 'Em Planejamento',
+  'andamento': 'Em Andamento',
+  'pausado': 'Pausado',
+  'concluido': 'Concluído',
+  'cancelado': 'Cancelado'
+};
+
+// Mapeamento de prioridades para cores
+const statusColors = {
+  'rascunho': '#6b7280',
+  'planejamento': '#3b82f6',
+  'andamento': '#10b981',
+  'pausado': '#f59e0b',
+  'concluido': '#10b981',
+  'cancelado': '#ef4444'
+};
 
 export default function CadastroProjeto() {
   const [projects, setProjects] = useState([]);
@@ -38,21 +42,39 @@ export default function CadastroProjeto() {
   const [statusFilter, setStatusFilter] = useState('Todos');
   const [searchTerm, setSearchTerm] = useState('');
   const [projectToDelete, setProjectToDelete] = useState(null);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
+  // Carregar projetos do serviço
   useEffect(() => {
-    // Simulando uma chamada assíncrona para carregar os projetos
-    const timer = setTimeout(() => {
-      setProjects(initialProjects);
-      setIsLoading(false);
-    }, 1000);
+    const carregarProjetos = async () => {
+      try {
+        setIsLoading(true);
+        const projetos = await projetoService.listarProjetos();
+        setProjects(projetos);
+        setError(null);
+      } catch (err) {
+        console.error('Erro ao carregar projetos:', err);
+        setError('Erro ao carregar projetos. Tente novamente mais tarde.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    return () => clearTimeout(timer);
+    carregarProjetos();
   }, []);
 
-  const filteredProjects = projects.filter(project => 
-    (statusFilter === 'Todos' || project.status === statusFilter) &&
-    project.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredProjects = projects.filter(project => {
+    const matchesStatus = statusFilter === 'Todos' || 
+                         (statusFilter === 'Em andamento' && project.status === 'andamento') ||
+                         (statusFilter === 'Em planejamento' && project.status === 'planejamento') ||
+                         (statusFilter === 'Concluído' && project.status === 'concluido');
+    
+    const matchesSearch = project.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         project.cliente.nome.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    return matchesStatus && matchesSearch;
+  });
 
   const handleFilter = (status) => {
     setStatusFilter(status);
@@ -65,11 +87,16 @@ export default function CadastroProjeto() {
     setProjectToDelete(project);
   };
 
-  const handleConfirmDelete = () => {
-    if (projectToDelete) {
+  const handleConfirmDelete = async () => {
+    if (!projectToDelete) return;
+    
+    try {
+      await projetoService.excluirProjeto(projectToDelete.id);
       setProjects(projects.filter(project => project.id !== projectToDelete.id));
       setProjectToDelete(null);
-      // Aqui você pode adicionar uma chamada para sua API para deletar o projeto
+    } catch (error) {
+      console.error('Erro ao excluir projeto:', error);
+      setError('Erro ao excluir o projeto. Tente novamente.');
     }
   };
 
@@ -110,6 +137,22 @@ export default function CadastroProjeto() {
           Painel de Projetos
         </Header>
 
+        {error && (
+          <div style={{ 
+            backgroundColor: '#fee2e2', 
+            color: '#991b1b', 
+            padding: '1rem', 
+            borderRadius: '0.5rem',
+            marginBottom: '1rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}>
+            <span>⚠️</span>
+            <span>{error}</span>
+          </div>
+        )}
+        
         <FilterContainer>
           {['Todos', 'Em andamento', 'Em planejamento', 'Concluído'].map(status => (
             <FilterButton 
@@ -188,24 +231,34 @@ export default function CadastroProjeto() {
                   key={project.id}
                   delay={`${index * 100}ms`}
                 >
-                  <Link to={`/projeto/${project.id}`} style={{ textDecoration: 'none', color: 'inherit', flex: 1 }}>
+                  <Link to={`/projetos/${project.id}`} style={{ textDecoration: 'none', color: 'inherit', flex: 1 }}>
                     <ProjectImage src={project.image} alt={project.name} />
                     <CardContent>
-                      <ProjectTitle>{project.name}</ProjectTitle>
+                      <ProjectTitle>{project.nome}</ProjectTitle>
                       <ProjectInfo>
                         <FaUser size={12} />
-                        <span>{project.owner}</span>
+                        <span>{project.cliente.nome}</span>
                       </ProjectInfo>
                       <ProjectInfo>
                         <FaCalendarAlt size={12} />
-                        <span>{project.date}</span>
+                        <span>
+                          {format(new Date(project.dataInicio), "dd/MM/yyyy", { locale: ptBR })}
+                          {project.dataFimPrevista && ` - ${format(new Date(project.dataFimPrevista), "dd/MM/yyyy", { locale: ptBR })}`}
+                        </span>
                       </ProjectInfo>
                       <div style={{ marginTop: 'auto', paddingTop: '1rem' }}>
-                        <ProgressBar progress={project.progress}>
-                          <div />
-                        </ProgressBar>
-                        <Status status={project.status}>
-                          {project.status}
+                        <Status style={{ 
+                          backgroundColor: `${statusColors[project.status]}15`,
+                          color: statusColors[project.status],
+                          border: `1px solid ${statusColors[project.status]}`, 
+                          display: 'inline-block',
+                          padding: '0.25rem 0.75rem',
+                          borderRadius: '9999px',
+                          fontSize: '0.75rem',
+                          fontWeight: '600',
+                          marginTop: '0.5rem'
+                        }}>
+                          {statusMap[project.status] || project.status}
                         </Status>
                       </div>
                     </CardContent>

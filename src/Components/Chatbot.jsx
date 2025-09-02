@@ -33,8 +33,8 @@ const Chatbot = () => {
     }
     
     // Sobre a Inova Indústria
-    if (input.includes('inova indústria') || input.includes('sobre a empresa') || input.includes('quem somos')) {
-      return 'A Inova Indústria é especializada em soluções tecnológicas para o setor industrial, focada em inovação, automação e eficiência operacional. Nossos projetos incluem:\n\n- Automação de processos industriais\n- Desenvolvimento de soluções IoT\n- Integração de sistemas\n- Consultoria em Indústria 4.0\n\nComo posso te ajudar hoje?';
+    if (input.includes('inova indústria') || input.includes('sobre a empresa') || input.includes('quem somos') || input.includes('o que é inova indústria')) {
+      return 'A Inova Indústria é uma empresa líder em soluções tecnológicas para o setor industrial, comprometida em transformar a indústria através da inovação e tecnologia.\n\n🔹 **Nossa Missão**\nImpulsionar a transformação digital das indústrias, oferecendo soluções inovadoras que aumentam a produtividade, eficiência e competitividade.\n\n🔹 **Áreas de Atuação**\n- Automação Industrial\n- Indústria 4.0\n- IoT Industrial\n- Manutenção Preditiva\n- Controle de Qualidade Avançado\n\n🔹 **Diferenciais**\n- Equipe altamente qualificada\n- Soluções personalizadas\n- Tecnologia de ponta\n- Suporte 24/7\n\nFundada em São Paulo, já atendemos mais de 100 indústrias em todo o Brasil, ajudando-as a alcançar novos patamares de excelência operacional.\n\nComo posso te ajudar hoje?';
     }
     
     // Projetos
