@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import { 
   FiArrowLeft, 
@@ -15,7 +15,7 @@ import {
   FiCalendar,
   FiCheck
 } from 'react-icons/fi';
-import { empresaService } from '../services/empresaService';
+import { empresaApiService } from '../services/empresaApiService';
 // O tipo CreateEmpresaDTO não é necessário em tempo de execução, então podemos removê-lo
 // Se precisar validar o tipo em tempo de execução, considere usar uma biblioteca como Yup
 
@@ -260,8 +260,11 @@ const setoresAtuacao = [
 ];
 
 const CadastrarEmpresa = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [submitCount, setSubmitCount] = useState(0);
   const [formData, setFormData] = useState({
     cnpj: '',
     razaoSocial: '',
@@ -281,6 +284,29 @@ const CadastrarEmpresa = () => {
     setorAtuacao: '',
     dataFundacao: undefined,
   });
+
+  // Load company data if in edit mode
+  useEffect(() => {
+    const carregarEmpresa = async () => {
+      if (id) {
+        try {
+          const empresa = await empresaApiService.buscarEmpresaPorId(id);
+          setFormData({
+            ...empresa,
+            // Format the date for the date input
+            dataFundacao: empresa.dataFundacao ? new Date(empresa.dataFundacao).toISOString().split('T')[0] : ''
+          });
+          setIsEditing(true);
+        } catch (error) {
+          console.error('Erro ao carregar empresa:', error);
+          alert('Erro ao carregar dados da empresa');
+          navigate('/empresas');
+        }
+      }
+    };
+
+    carregarEmpresa();
+  }, [id, navigate]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -308,53 +334,122 @@ const CadastrarEmpresa = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Prevent multiple submissions
+    if (isSubmitting) return;
+    
     setIsSubmitting(true);
+    setSubmitCount(prev => prev + 1);
     
     try {
-      // Usando o serviço para criar a empresa
-      await empresaService.criarEmpresa({
-        ...formData,
-        quantidadeFuncionarios: formData.quantidadeFuncionarios || 0,
-        ativo: true
-      });
+      // Format CNPJ (remove formatting)
+      const cnpjLimpo = formData.cnpj.replace(/\D/g, '');
       
-      // Redireciona para a lista de empresas após o cadastro
+      // Basic validation
+      if (!cnpjLimpo || !formData.razaoSocial) {
+        throw new Error('CNPJ e Razão Social são campos obrigatórios');
+      }
+      
+      // Prepare data for API - only include fields that exist in the backend DTO
+      const empresaData = {
+        cnpj: cnpjLimpo,
+        razaoSocial: formData.razaoSocial.trim(),
+        nomeFantasia: formData.nomeFantasia?.trim(),
+        email: formData.email?.trim(),
+        telefone: formData.telefone?.replace(/\D/g, ''),
+        endereco: formData.endereco?.trim(),
+        cidade: formData.cidade?.trim(),
+        estado: formData.estado,
+        cep: formData.cep?.replace(/\D/g, '')
+        // Removed 'numero', 'complemento', 'bairro', 'quantidadeFuncionarios', and 'setorAtuacao' fields
+        // dataCadastro will be set by the backend
+      };
+
+      // Log the data being sent (for debugging)
+      console.log('Enviando dados da empresa:', empresaData);
+
+      let response;
+      if (isEditing && id) {
+        // Update existing company
+        response = await empresaApiService.atualizarEmpresa(id, empresaData);
+      } else {
+        // Check if company with this CNPJ already exists
+        const empresas = await empresaApiService.listarEmpresas();
+        const empresaExistente = empresas.find(e => e.cnpj === cnpjLimpo);
+        
+        if (empresaExistente) {
+          const confirmarAtualizacao = window.confirm(
+            `Já existe uma empresa cadastrada com este CNPJ (${cnpjLimpo}). Deseja atualizar os dados?`
+          );
+          
+          if (confirmarAtualizacao) {
+            response = await empresaApiService.atualizarEmpresa(empresaExistente.id, empresaData);
+          } else {
+            return; // User chose not to update
+          }
+        } else {
+          // Create new company
+          response = await empresaApiService.criarEmpresa(empresaData);
+        }
+      }
+      
+      // Show success message and redirect
+      alert(`Empresa ${response.razaoSocial} ${isEditing ? 'atualizada' : 'cadastrada'} com sucesso!`);
       navigate('/empresas');
       
     } catch (error) {
-      console.error('Erro ao cadastrar empresa:', error);
-      alert('Erro ao cadastrar empresa. Por favor, tente novamente.');
+      console.error('Erro ao processar empresa:', error);
+      
+      // Log the full error response if available
+      if (error.response) {
+        console.error('Resposta do servidor:', error.response.data);
+        console.error('Status:', error.response.status);
+        console.error('Headers:', error.response.headers);
+      } else if (error.request) {
+        console.error('Sem resposta do servidor. Verifique sua conexão.');
+      }
+      
+      // Show more detailed error message
+      let errorMessage = 'Ocorreu um erro ao processar a empresa. Por favor, tente novamente.';
+      
+      if (error.response?.data?.message) {
+        // If the backend sent an error message, use it
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        // Otherwise use the error message
+        errorMessage = error.message;
+      }
+      
+      alert(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Função para buscar CEP (exemplo de implementação)
+  // Função para buscar CEP usando ViaCEP
   const buscarCep = async (cep) => {
-    if (cep.length === 9) {
+    const cepLimpo = cep.replace(/\D/g, '');
+    
+    if (cepLimpo.length === 8) {
       try {
-        // Aqui você faria uma chamada para a API de CEP
-        // const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
-        // const data = await response.json();
+        const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+        const data = await response.json();
         
-        // Simulando resposta da API de CEP
-        const data = {
-          logradouro: 'Rua Exemplo',
-          bairro: 'Bairro Exemplo',
-          localidade: 'Cidade Exemplo',
-          uf: 'SP'
-        };
-        
-        setFormData(prev => ({
-          ...prev,
-          endereco: data.logradouro || '',
-          bairro: data.bairro || '',
-          cidade: data.localidade || '',
-          estado: data.uf || ''
-        }));
+        if (!data.erro) {
+          setFormData(prev => ({
+            ...prev,
+            endereco: data.logradouro || '',
+            bairro: data.bairro || '',
+            cidade: data.localidade || '',
+            estado: data.uf || ''
+          }));
+        } else {
+          alert('CEP não encontrado');
+        }
         
       } catch (error) {
         console.error('Erro ao buscar CEP:', error);
+        alert('Erro ao buscar CEP. Verifique a conexão e tente novamente.');
       }
     }
   };
@@ -365,7 +460,7 @@ const CadastrarEmpresa = () => {
         <BackButton onClick={() => navigate('/empresas')}>
           <FiArrowLeft /> Voltar
         </BackButton>
-        <Title>Cadastrar Nova Empresa</Title>
+        <Title>{isEditing ? 'Editar Empresa' : 'Cadastrar Nova Empresa'}</Title>
       </Header>
       
       <FormContainer>
@@ -659,17 +754,7 @@ const CadastrarEmpresa = () => {
               $primary
               disabled={isSubmitting}
             >
-              {isSubmitting ? (
-                <>
-                  <FiCheck size={16} />
-                  Salvando...
-                </>
-              ) : (
-                <>
-                  <FiSave size={16} />
-                  Salvar Empresa
-                </>
-              )}
+              <FiSave /> {isSubmitting ? 'Salvando...' : isEditing ? 'Atualizar' : 'Salvar'}
             </Button>
           </ButtonGroup>
         </form>
