@@ -85,13 +85,15 @@ const FormGroup = styled.div`
   margin-bottom: 1rem;
   
   label {
-    display: block;
+    display: flex;
+    align-items: center;
     margin-bottom: 0.5rem;
     font-weight: 500;
     color: #495057;
+    position: relative;
     
     span {
-      color: #fa5252;
+      display: inline !important;
     }
   }
   
@@ -321,6 +323,17 @@ const CadastrarEmpresa = () => {
       console.log('[NEW MODE] Modo de criação de nova empresa');
     }
   }, [id, navigate]);
+
+  const isRequired = (fieldName) => {
+    const requiredFields = [
+      'razaoSocial', 'cnpj', 'nomeFantasia', 'email', 
+      'telefone', 'cep', 'endereco', 'numero', 
+      'bairro', 'cidade', 'estado'
+    ];
+    return requiredFields.includes(fieldName);
+  };
+
+  const RequiredIndicator = () => <span style={{ color: '#ff4444', marginLeft: '2px' }}>*</span>;
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -577,7 +590,7 @@ const CadastrarEmpresa = () => {
           <Grid>
             <FullWidth>
               <FormGroup>
-                <label>CNPJ <span>*</span></label>
+                <label>CNPJ {isRequired('cnpj') && <RequiredIndicator />}</label>
                 <InputGroup>
                   <Input
                     type="text"
@@ -610,7 +623,7 @@ const CadastrarEmpresa = () => {
             
             <div>
               <FormGroup>
-                <label>Razão Social <span>*</span></label>
+                <label>Razão Social {isRequired('razaoSocial') && <RequiredIndicator />}</label>
                 <Input
                   type="text"
                   name="razaoSocial"
@@ -626,7 +639,7 @@ const CadastrarEmpresa = () => {
             
             <div>
               <FormGroup>
-                <label>Nome Fantasia <span>*</span></label>
+                <label>Nome Fantasia {isRequired('nomeFantasia') && <RequiredIndicator />}</label>
                 <Input
                   type="text"
                   name="nomeFantasia"
@@ -642,7 +655,7 @@ const CadastrarEmpresa = () => {
             
             <div>
               <FormGroup>
-                <label>E-mail</label>
+                <label>E-mail {isRequired('email') && <RequiredIndicator />}</label>
                 <Input
                   type="email"
                   name="email"
@@ -658,7 +671,7 @@ const CadastrarEmpresa = () => {
             
             <div>
               <FormGroup>
-                <label>Telefone</label>
+                <label>Telefone {isRequired('telefone') && <RequiredIndicator />}</label>
                 <Input
                   type="text"
                   name="telefone"
@@ -675,7 +688,7 @@ const CadastrarEmpresa = () => {
             
             <div>
               <FormGroup>
-                <label>CEP</label>
+                <label>CEP {isRequired('cep') && <RequiredIndicator />}</label>
                 <Input
                   type="text"
                   name="cep"
@@ -692,7 +705,7 @@ const CadastrarEmpresa = () => {
             
             <div>
               <FormGroup>
-                <label>Endereço</label>
+                <label>Endereço {isRequired('endereco') && <RequiredIndicator />}</label>
                 <Input
                   type="text"
                   name="endereco"
@@ -706,7 +719,7 @@ const CadastrarEmpresa = () => {
             
             <div>
               <FormGroup>
-                <label>Número</label>
+                <label>Número {isRequired('numero') && <RequiredIndicator />}</label>
                 <Input
                   type="text"
                   name="numero"
@@ -734,7 +747,7 @@ const CadastrarEmpresa = () => {
             
             <div>
               <FormGroup>
-                <label>Bairro</label>
+                <label>Bairro {isRequired('bairro') && <RequiredIndicator />}</label>
                 <Input
                   type="text"
                   name="bairro"
@@ -748,7 +761,7 @@ const CadastrarEmpresa = () => {
             
             <div>
               <FormGroup>
-                <label>Cidade</label>
+                <label>Cidade {isRequired('cidade') && <RequiredIndicator />}</label>
                 <Input
                   type="text"
                   name="cidade"
@@ -762,7 +775,7 @@ const CadastrarEmpresa = () => {
             
             <div>
               <FormGroup>
-                <label>Estado</label>
+                <label>Estado {isRequired('estado') && <RequiredIndicator />}</label>
                 <Input
                   type="text"
                   name="estado"
