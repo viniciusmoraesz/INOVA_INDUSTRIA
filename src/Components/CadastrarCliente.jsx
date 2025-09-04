@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import { 
   FiArrowLeft, 
@@ -17,10 +17,12 @@ import {
   FiTrash2,
   FiMapPin,
   FiHome,
-  FiRefreshCw
+  FiRefreshCw,
+  FiCalendar,
+  FiUsers
 } from 'react-icons/fi';
-import { empresaService } from '../services/empresaService';
-import { clienteService } from '../services/clienteService';
+import { empresaApiService } from '../services/empresaApiService';
+import { clienteApiService } from '../services/clienteApiService';
 
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(10px); }
@@ -268,8 +270,15 @@ const DangerButton = styled(Button)`
 `;
 
 const CadastrarCliente = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
-  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [submitCount, setSubmitCount] = useState(0);
+  const [empresas, setEmpresas] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   // Estado para os dados do formulário
   const [formData, setFormData] = useState({
     nome: '',
@@ -277,21 +286,52 @@ const CadastrarCliente = () => {
     telefone: '',
     cpf: '',
     cargo: '',
+    departamento: '',
     dataNascimento: '',
-    empresaId: ''
+    idEmpresa: '',
+    senha: '',
+    role: 'CLIENTE' // Valor padrão para role
   });
-  
-  // Estado para armazenar a lista de empresas
-  const [empresas, setEmpresas] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
 
-  // Estado para projetos vinculados
-  const [projetos, setProjetos] = useState([
-    { id: 1, nome: 'Modernização de Linha de Produção', selecionado: false },
-    { id: 2, nome: 'Automação Industrial', selecionado: false },
-    { id: 3, nome: 'Manutenção Preditiva', selecionado: false }
-  ]);
+  // Load client data if in edit mode
+  useEffect(() => {
+    const carregarCliente = async () => {
+      if (id) {
+        try {
+          const cliente = await clienteApiService.buscarClientePorId(id);
+          setFormData({
+            ...cliente,
+            // Format the date for the date input
+            dataNascimento: cliente.dataNascimento ? new Date(cliente.dataNascimento).toISOString().split('T')[0] : ''
+          });
+          setIsEditing(true);
+        } catch (error) {
+          console.error('Erro ao carregar cliente:', error);
+          alert('Erro ao carregar dados do cliente');
+          navigate('/clientes');
+        }
+      }
+    };
+
+    carregarCliente();
+  }, [id, navigate]);
+
+  // Load companies
+  useEffect(() => {
+    const carregarEmpresas = async () => {
+      try {
+        const empresas = await empresaApiService.listarEmpresas();
+        setEmpresas(empresas);
+      } catch (error) {
+        console.error('Erro ao carregar empresas:', error);
+        setError('Não foi possível carregar a lista de empresas');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    carregarEmpresas();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -301,138 +341,145 @@ const CadastrarCliente = () => {
     }));
   };
 
-  const handleProjetoChange = (id) => {
-    setProjetos(projetos.map(projeto => 
-      projeto.id === id ? { ...projeto, selecionado: !projeto.selecionado } : projeto
-    ));
-  };
-
-  // Carregar empresas ao montar o componente
-  useEffect(() => {
-    const carregarEmpresas = async () => {
-      try {
-        setIsLoading(true);
-        const empresasAtivas = await empresaService.listarEmpresasAtivas();
-        setEmpresas(empresasAtivas);
-        setError(null);
-      } catch (err) {
-        console.error('Erro ao carregar empresas:', err);
-        setError('Não foi possível carregar a lista de empresas. Tente novamente mais tarde.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    carregarEmpresas();
-  }, []);
-  
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!formData.empresaId) {
-      setError('Por favor, selecione uma empresa');
-      return;
-    }
+    // Prevent multiple submissions
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
+    setSubmitCount(prev => prev + 1);
+    setError(null); // Reset error state
     
     try {
-      setIsLoading(true);
-      setError(null);
+      console.log('Iniciando envio do formulário...');
       
-      // Buscar o nome da empresa selecionada
-      const empresaSelecionada = empresas.find(emp => emp.id === formData.empresaId);
+      // Format CPF (remove formatting)
+      const cpfLimpo = formData.cpf ? formData.cpf.replace(/\D/g, '') : '';
       
-      // Criar objeto do cliente no formato esperado
-      const novoCliente = {
-        id: 'cliente-' + Date.now().toString(), // Prefixo para evitar conflitos
-        nome: formData.nome,
-        email: formData.email,
-        telefone: formData.telefone,
-        cpf: formData.cpf,
-        empresaId: formData.empresaId,
-        empresaNome: empresaSelecionada?.nomeFantasia || 'Empresa não especificada',
-        cargo: formData.cargo,
-        dataNascimento: formData.dataNascimento,
-        role: 'CLIENTE',
-        ativo: true,
-        createdAt: new Date().toISOString(),
-        projects: 0
+      // Basic validation
+      if (!cpfLimpo || !formData.nome || !formData.idEmpresa) {
+        throw new Error('CPF, Nome e Empresa são campos obrigatórios');
+      }
+      
+      // Validate CPF length (11 digits)
+      if (cpfLimpo.length !== 11) {
+        throw new Error('CPF deve conter 11 dígitos');
+      }
+      
+      // Prepare data for API
+      const clienteData = {
+        ...formData,
+        cpf: cpfLimpo,
+        telefone: formData.telefone ? formData.telefone.replace(/\D/g, '') : null,
+        role: formData.role || 'CLIENTE',
+        // Only include password if it's a new user or if it was changed
+        ...(formData.senha ? { senha: formData.senha } : {})
       };
+
+      console.log('Dados do cliente preparados para envio:', JSON.stringify(clienteData, null, 2));
+
+      let response;
+      if (isEditing && id) {
+        console.log('Atualizando cliente existente...');
+        response = await clienteApiService.atualizarCliente(id, clienteData);
+      } else {
+        console.log('Verificando se o cliente já existe...');
+        const clientes = await clienteApiService.listarClientes();
+        const clienteExistente = clientes.find(c => c.cpf === cpfLimpo);
+        
+        if (clienteExistente) {
+          const confirmarAtualizacao = window.confirm(
+            `Já existe um cliente cadastrado com este CPF (${cpfLimpo}). Deseja atualizar os dados?`
+          );
+          
+          if (confirmarAtualizacao) {
+            console.log('Atualizando cliente existente...');
+            response = await clienteApiService.atualizarCliente(clienteExistente.id, clienteData);
+          } else {
+            console.log('Atualização cancelada pelo usuário');
+            return; // User chose not to update
+          }
+        } else {
+          console.log('Criando novo cliente...');
+          // For new users, password is required
+          if (!clienteData.senha) {
+            throw new Error('A senha é obrigatória para novos clientes');
+          }
+          response = await clienteApiService.criarCliente(clienteData);
+        }
+      }
       
-      console.log('Salvando novo cliente:', novoCliente);
+      console.log('Cliente processado com sucesso:', response);
       
-      // Usando o serviço para salvar o cliente
-      const clienteSalvo = await clienteService.criarCliente(novoCliente);
-      console.log('Cliente salvo com sucesso:', clienteSalvo);
+      // Show success message and redirect
+      alert(`Cliente ${response.nome} ${isEditing ? 'atualizado' : 'cadastrado'} com sucesso!`);
+      navigate('/clientes');
       
-      // Forçar atualização da lista de usuários
-      window.dispatchEvent(new Event('storage'));
+    } catch (error) {
+      console.error('Erro ao processar cliente:', error);
       
-      // Pequeno atraso para garantir que o localStorage foi atualizado
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // Create a more descriptive error message
+      let errorMessage = 'Ocorreu um erro ao processar o cliente. Por favor, tente novamente.';
       
-      // Redireciona para a página de usuários RH após o cadastro
-      navigate('/usuariosrh');
-    } catch (err) {
-      console.error('Erro ao cadastrar cliente:', err);
-      setError('Ocorreu um erro ao cadastrar o cliente. Por favor, tente novamente.');
+      // Check for network errors
+      if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+        errorMessage = 'Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.';
+      } 
+      // Check for validation errors from the server
+      else if (error.status === 400) {
+        errorMessage = 'Dados inválidos. Verifique os campos e tente novamente.';
+        if (error.data) {
+          errorMessage += '\n' + JSON.stringify(error.data, null, 2);
+        }
+      }
+      // Use the error message from the server if available
+      else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setError(errorMessage);
     } finally {
-      setIsLoading(false);
+      console.log('Finalizando envio do formulário');
+      setIsSubmitting(false);
     }
   };
 
   return (
     <PageContainer>
       <Header>
-        <BackButton onClick={() => navigate('/usuariosrh')}>
+        <BackButton onClick={() => navigate('/clientes')}>
           <FiArrowLeft /> Voltar
         </BackButton>
-        <Title>Cadastrar Novo Cliente</Title>
+        <Title>{isEditing ? 'Editar Cliente' : 'Cadastrar Novo Cliente'}</Title>
       </Header>
       
       <FormContainer>
         <form onSubmit={handleSubmit}>
+          <SectionTitle>
+            <FiUser size={20} />
+            Dados Pessoais
+          </SectionTitle>
+          
           <FormRow>
             <FormGroup>
-              <Label>Empresa <span className="required">*</span></Label>
-              {isLoading ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#6c757d' }}>
-                  <FiRefreshCw className="spin" />
-                  Carregando empresas...
-                </div>
-              ) : (
-                <Select 
-                  name="empresaId" 
-                  value={formData.empresaId} 
-                  onChange={handleInputChange}
-                  required
-                  disabled={isLoading}
-                >
-                  <option value="">Selecione uma empresa</option>
-                  {empresas.map(empresa => (
-                    <option key={empresa.id} value={empresa.id}>
-                      {empresa.nomeFantasia}
-                    </option>
-                  ))}
-                </Select>
-              )}
-            </FormGroup>
-            
-            <FormGroup>
-              <Label>Nome Completo <span className="required">*</span></Label>
+              <Label>
+                Nome Completo <span className="required">*</span>
+              </Label>
               <Input 
                 type="text" 
                 name="nome" 
                 value={formData.nome} 
                 onChange={handleInputChange} 
-                placeholder="Nome completo"
-                required
+                placeholder="Nome completo do cliente"
+                required 
               />
             </FormGroup>
-          </FormRow>
-          
-          <FormRow>
+            
             <FormGroup>
-              <Label>CPF <span className="required">*</span></Label>
+              <Label>
+                CPF <span className="required">*</span>
+              </Label>
               <Input 
                 type="text" 
                 name="cpf" 
@@ -442,33 +489,9 @@ const CadastrarCliente = () => {
                 required 
               />
             </FormGroup>
-            
-            <FormGroup>
-              <Label>E-mail <span className="required">*</span></Label>
-              <Input 
-                type="email" 
-                name="email" 
-                value={formData.email} 
-                onChange={handleInputChange} 
-                placeholder="email@exemplo.com.br"
-                required 
-              />
-            </FormGroup>
           </FormRow>
           
           <FormRow>
-            <FormGroup>
-              <Label>Telefone <span className="required">*</span></Label>
-              <Input 
-                type="tel" 
-                name="telefone" 
-                value={formData.telefone} 
-                onChange={handleInputChange} 
-                placeholder="(00) 00000-0000"
-                required 
-              />
-            </FormGroup>
-            
             <FormGroup>
               <Label>Data de Nascimento</Label>
               <Input 
@@ -478,9 +501,85 @@ const CadastrarCliente = () => {
                 onChange={handleInputChange}
               />
             </FormGroup>
+            
+            <FormGroup>
+              <Label>Telefone</Label>
+              <Input 
+                type="tel" 
+                name="telefone" 
+                value={formData.telefone} 
+                onChange={handleInputChange} 
+                placeholder="(00) 00000-0000"
+              />
+            </FormGroup>
           </FormRow>
           
+          <SectionTitle>
+            <FiMail size={20} />
+            Contato
+          </SectionTitle>
+          
           <FormRow>
+            <FormGroup>
+              <Label>
+                E-mail <span className="required">*</span>
+              </Label>
+              <Input 
+                type="email" 
+                name="email" 
+                value={formData.email} 
+                onChange={handleInputChange} 
+                placeholder="email@exemplo.com.br"
+                required 
+              />
+            </FormGroup>
+            
+            <FormGroup>
+              <Label>Senha {!isEditing && <span className="required">*</span>}</Label>
+              <Input 
+                type="password" 
+                name="senha" 
+                value={formData.senha || ''} 
+                onChange={handleInputChange} 
+                placeholder={isEditing ? "Deixe em branco para não alterar" : "Senha de acesso"}
+                required={!isEditing}
+              />
+            </FormGroup>
+          </FormRow>
+          
+          <SectionTitle>
+            <FiBriefcase size={20} />
+            Dados Profissionais
+          </SectionTitle>
+          
+          <FormRow>
+            <FormGroup>
+              <Label>
+                Empresa <span className="required">*</span>
+              </Label>
+              {isLoading ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#6c757d' }}>
+                  <FiRefreshCw className="spin" />
+                  Carregando empresas...
+                </div>
+              ) : (
+                <Select 
+                  name="idEmpresa" 
+                  value={formData.idEmpresa} 
+                  onChange={handleInputChange}
+                  required
+                  disabled={isSubmitting}
+                >
+                  <option value="">Selecione uma empresa</option>
+                  {empresas.map(empresa => (
+                    <option key={empresa.id} value={empresa.id}>
+                      {empresa.nomeFantasia || empresa.razaoSocial}
+                    </option>
+                  ))}
+                </Select>
+              )}
+            </FormGroup>
+            
             <FormGroup>
               <Label>Cargo</Label>
               <Input 
@@ -491,9 +590,34 @@ const CadastrarCliente = () => {
                 placeholder="Cargo na empresa"
               />
             </FormGroup>
-            <FormGroup></FormGroup>
           </FormRow>
           
+          <FormRow>
+            <FormGroup>
+              <Label>Departamento</Label>
+              <Input 
+                type="text" 
+                name="departamento" 
+                value={formData.departamento || ''} 
+                onChange={handleInputChange} 
+                placeholder="Departamento"
+              />
+            </FormGroup>
+            
+            <FormGroup>
+              <Label>Função</Label>
+              <Select 
+                name="role" 
+                value={formData.role || 'CLIENTE'} 
+                onChange={handleInputChange}
+                disabled={isSubmitting}
+              >
+                <option value="CLIENTE">Cliente</option>
+                <option value="ADMINISTRADOR">Acompanhante</option>
+                <option value="GERENTE">Gerente</option>
+              </Select>
+            </FormGroup>
+          </FormRow>
           
           <SectionTitle>
             <FiFileText size={20} />
@@ -504,7 +628,7 @@ const CadastrarCliente = () => {
             <Label>Observações adicionais</Label>
             <textarea 
               name="observacoes" 
-              value={formData.observacoes} 
+              value={formData.observacoes || ''} 
               onChange={handleInputChange} 
               placeholder="Digite observações adicionais sobre o cliente"
               style={{
@@ -552,19 +676,9 @@ const CadastrarCliente = () => {
             <Button 
               type="submit" 
               $primary
-              disabled={isLoading}
+              disabled={isSubmitting}
             >
-              {isLoading ? (
-                <>
-                  <FiRefreshCw className="spin" size={16} />
-                  Salvando...
-                </>
-              ) : (
-                <>
-                  <FiSave size={16} />
-                  Salvar Cliente
-                </>
-              )}
+              <FiSave /> {isSubmitting ? 'Salvando...' : isEditing ? 'Atualizar' : 'Salvar'}
             </Button>
           </ButtonGroup>
         </form>
