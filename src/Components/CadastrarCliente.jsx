@@ -19,7 +19,7 @@ import {
   FiHome,
   FiRefreshCw
 } from 'react-icons/fi';
-import { empresaService } from '../services/empresaService';
+import empresaApiService from '../services/empresaApiService';
 import { clienteService } from '../services/clienteService';
 
 const fadeIn = keyframes`
@@ -312,7 +312,7 @@ const CadastrarCliente = () => {
     const carregarEmpresas = async () => {
       try {
         setIsLoading(true);
-        const empresasAtivas = await empresaService.listarEmpresasAtivas();
+        const empresasAtivas = await empresaApiService.listarEmpresas();
         setEmpresas(empresasAtivas);
         setError(null);
       } catch (err) {

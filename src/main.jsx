@@ -21,6 +21,7 @@ import Usuariosrh from './Components/Usuariosrh.jsx';
 import EditUserPage from './Components/EditUserPage.jsx';
 import CadastrarCliente from './Components/CadastrarCliente.jsx';
 import CadastrarEmpresa from './Components/CadastrarEmpresa.jsx';
+import EditarEmpresa from './Components/EditarEmpresa.jsx';
 import ListaEmpresas from './Components/ListaEmpresas.jsx';
 
 const AppRouter = () => {
@@ -41,7 +42,7 @@ const AppRouter = () => {
         <Route path="clientes/novo" element={<CadastrarCliente />} />
         <Route path="empresas" element={<ListaEmpresas />} />
         <Route path="empresas/nova" element={<CadastrarEmpresa />} />
-        <Route path="empresas/editar/:id" element={<CadastrarEmpresa />} />
+        <Route path="empresas/editar/:id" element={<EditarEmpresa />} />
       </Route>
     </Routes>
   );
