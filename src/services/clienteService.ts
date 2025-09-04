@@ -1,5 +1,5 @@
 import { Cliente, CreateClienteDTO, UpdateClienteDTO } from '../types/cliente';
-import { empresaService } from './empresaService';
+import empresaApiService from './empresaApiService';
 
 // Chave para armazenar no localStorage
 const STORAGE_KEY = 'clientes_data';
@@ -141,7 +141,7 @@ export const clienteService = {
     
     // Verificar se a empresa existe
     console.log(`Buscando empresa com ID: '${dados.empresaId}'`);
-    const empresa = await empresaService.buscarEmpresaPorId(dados.empresaId);
+    const empresa = await empresaApiService.buscarEmpresaPorId(dados.empresaId);
     console.log('Empresa encontrada:', empresa ? `ID: ${empresa.id}, Nome: ${empresa.nomeFantasia}` : 'Não encontrada');
     
     if (!empresa) {
@@ -190,7 +190,7 @@ export const clienteService = {
     
     // Se estiver atualizando a empresa, verifica se ela existe
     if (dados.empresaId) {
-      const empresa = await empresaService.buscarEmpresaPorId(dados.empresaId);
+      const empresa = await empresaApiService.buscarEmpresaPorId(dados.empresaId);
       if (!empresa) {
         throw new Error('Empresa não encontrada');
       }

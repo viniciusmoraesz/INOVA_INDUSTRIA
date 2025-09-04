@@ -30,7 +30,7 @@ import {
 } from '../Styles/StyledAdicionarProjeto';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaSpinner } from 'react-icons/fa';
-import { empresaService } from '../services/empresaService';
+import empresaApiService from '../services/empresaApiService';
 import { clienteService } from '../services/clienteService';
 import { projetoService } from '../services/projetoService';
 
@@ -115,7 +115,7 @@ export default function AdicionarProjeto() {
     const carregarEmpresas = async () => {
       try {
         setIsLoading(true);
-        const empresasData = await empresaService.listarEmpresas();
+        const empresasData = await empresaApiService.listarEmpresas();
         setEmpresas(empresasData);
       } catch (error) {
         console.error('Erro ao carregar empresas:', error);

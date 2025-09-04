@@ -6,7 +6,7 @@ import ptBR from 'date-fns/locale/pt-BR';
 
 // Serviços
 import { projetoService } from '../services/projetoService';
-import { empresaService } from '../services/empresaService';
+import empresaApiService from '../services/empresaApiService';
 import { clienteService } from '../services/clienteService';
 
 import { 

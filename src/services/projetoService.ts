@@ -1,5 +1,5 @@
 import { Projeto, CreateProjetoDTO, UpdateProjetoDTO, ProjetoWithDetails } from '../types/projeto';
-import { empresaService } from './empresaService';
+import empresaApiService from './empresaApiService';
 import { clienteService } from './clienteService';
 
 // Chave para armazenar no localStorage
@@ -95,7 +95,7 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 // Função auxiliar para buscar detalhes adicionais
 async function getProjetoWithDetails(projeto: Projeto): Promise<ProjetoWithDetails> {
   const [empresa, cliente] = await Promise.all([
-    empresaService.buscarEmpresaPorId(projeto.empresaId),
+    empresaApiService.buscarEmpresaPorId(projeto.empresaId),
     clienteService.buscarClientePorId(projeto.clienteId)
   ]);
 
@@ -152,7 +152,7 @@ export const projetoService = {
     
     // Verificar se a empresa e o cliente existem
     const [empresa, cliente] = await Promise.all([
-      empresaService.buscarEmpresaPorId(dados.empresaId),
+      empresaApiService.buscarEmpresaPorId(dados.empresaId),
       clienteService.buscarClientePorId(dados.clienteId)
     ]);
     
@@ -199,7 +199,7 @@ export const projetoService = {
       const clienteId = dados.clienteId || projetos[index].clienteId;
       
       const [empresa, cliente] = await Promise.all([
-        empresaService.buscarEmpresaPorId(empresaId),
+        empresaApiService.buscarEmpresaPorId(empresaId),
         clienteService.buscarClientePorId(clienteId)
       ]);
       
