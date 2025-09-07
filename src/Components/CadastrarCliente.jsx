@@ -21,7 +21,7 @@ import {
   FiCalendar,
   FiUsers
 } from 'react-icons/fi';
-import { empresaApiService } from '../services/empresaApiService';
+import empresaApiService from '../services/empresaApiService';
 import { clienteApiService } from '../services/clienteApiService';
 
 const fadeIn = keyframes`
@@ -320,11 +320,14 @@ const CadastrarCliente = () => {
   useEffect(() => {
     const carregarEmpresas = async () => {
       try {
-        const empresas = await empresaApiService.listarEmpresas();
-        setEmpresas(empresas);
+        setIsLoading(true);
+        const empresasData = await empresaApiService.listarEmpresas();
+        console.log('Empresas carregadas:', empresasData);
+        console.log('Estrutura da primeira empresa:', empresasData?.[0]);
+        setEmpresas(empresasData || []);
       } catch (error) {
         console.error('Erro ao carregar empresas:', error);
-        setError('Não foi possível carregar a lista de empresas');
+        setEmpresas([]);
       } finally {
         setIsLoading(false);
       }
@@ -335,9 +338,16 @@ const CadastrarCliente = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    
+    // Convert idEmpresa to number when selected, keep empty string for default option
+    let processedValue = value;
+    if (name === 'idEmpresa' && value && value !== '') {
+      processedValue = parseInt(value, 10);
+    }
+    
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: processedValue
     }));
   };
 
@@ -361,6 +371,12 @@ const CadastrarCliente = () => {
       if (!cpfLimpo || !formData.nome || !formData.idEmpresa) {
         throw new Error('CPF, Nome e Empresa são campos obrigatórios');
       }
+
+      // Validate idEmpresa is a valid number
+      const empresaId = parseInt(formData.idEmpresa, 10);
+      if (isNaN(empresaId) || empresaId <= 0) {
+        throw new Error('Selecione uma empresa válida');
+      }
       
       // Validate CPF length (11 digits)
       if (cpfLimpo.length !== 11) {
@@ -373,11 +389,17 @@ const CadastrarCliente = () => {
         cpf: cpfLimpo,
         telefone: formData.telefone ? formData.telefone.replace(/\D/g, '') : null,
         role: formData.role || 'CLIENTE',
+        idEmpresa: empresaId, // Use validated number
         // Only include password if it's a new user or if it was changed
         ...(formData.senha ? { senha: formData.senha } : {})
       };
 
+      console.log('=== DEBUG CADASTRO CLIENTE ===');
+      console.log('FormData completo:', JSON.stringify(formData, null, 2));
+      console.log('idEmpresa original:', formData.idEmpresa, 'tipo:', typeof formData.idEmpresa);
+      console.log('idEmpresa convertido:', empresaId, 'tipo:', typeof empresaId);
       console.log('Dados do cliente preparados para envio:', JSON.stringify(clienteData, null, 2));
+      console.log('================================');
 
       let response;
       if (isEditing && id) {
@@ -565,17 +587,23 @@ const CadastrarCliente = () => {
               ) : (
                 <Select 
                   name="idEmpresa" 
-                  value={formData.idEmpresa} 
+                  value={formData.idEmpresa || ''} 
                   onChange={handleInputChange}
                   required
                   disabled={isSubmitting}
                 >
                   <option value="">Selecione uma empresa</option>
-                  {empresas.map(empresa => (
-                    <option key={empresa.id} value={empresa.id}>
-                      {empresa.nomeFantasia || empresa.razaoSocial}
-                    </option>
-                  ))}
+                  {empresas.map((empresa, index) => {
+                    console.log(`Empresa ${index}:`, empresa);
+                    return (
+                      <option 
+                        key={empresa.id ? `empresa-${empresa.id}` : `empresa-index-${index}`} 
+                        value={empresa.id || ''}
+                      >
+                        {empresa.nomeFantasia || empresa.razaoSocial || empresa.nome || `Empresa ${index + 1}`}
+                      </option>
+                    );
+                  })}
                 </Select>
               )}
             </FormGroup>
@@ -613,8 +641,8 @@ const CadastrarCliente = () => {
                 disabled={isSubmitting}
               >
                 <option value="CLIENTE">Cliente</option>
-                <option value="ADMINISTRADOR">Acompanhante</option>
-                <option value="GERENTE">Gerente</option>
+                <option value="ADMIN">Admin</option>
+                <option value="SUPER_ADMIN">Super Admin</option>
               </Select>
             </FormGroup>
           </FormRow>

@@ -1,12 +1,25 @@
-const API_BASE_URL = 'http://localhost:8080/api';
+const API_BASE_URL = 'http://localhost:8080';
+
+// Helper function to get authentication headers
+const getAuthHeaders = () => {
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  if (user?.token) {
+    return {
+      'Authorization': `Bearer ${user.token}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    };
+  }
+  return {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+  };
+};
 
 // Configuração padrão para todas as requisições
 const defaultOptions = {
   credentials: 'include',  // Importante para CORS com credenciais
-  headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json'
-  }
+  headers: getAuthHeaders()
 };
 
 // Helper function to handle API responses
@@ -158,10 +171,7 @@ const empresaApiService = {
       console.log('[API] Enviando requisição para API...');
       const response = await fetch(`${API_BASE_URL}/empresas`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
+        headers: getAuthHeaders(),
         credentials: 'include', // Importante para CORS com credenciais
         body: JSON.stringify(formattedData),
       });
@@ -250,10 +260,7 @@ const empresaApiService = {
       
       const response = await fetch(`${API_BASE_URL}/empresas`, {
         method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
+        headers: getAuthHeaders(),
         credentials: 'include',
         mode: 'cors',
         cache: 'no-cache' // Evita cache indesejado
@@ -321,8 +328,12 @@ const empresaApiService = {
       console.log(`[API] ${empresas.length} empresas encontradas`);
       
       // Mapeia a resposta para garantir nomes de campos consistentes e valores padrão
-      const empresasMapeadas = empresas.map(empresa => ({
-        id: empresa.id,
+      const empresasMapeadas = empresas.map((empresa, index) => {
+        console.log(`[API] Mapeando empresa ${index}:`, empresa);
+        console.log(`[API] ID da empresa ${index}:`, empresa.id, typeof empresa.id);
+        
+        return {
+          id: empresa.id || empresa.idEmpresa || empresa.ID,
         cnpj: empresa.cnpj || '',
         razaoSocial: empresa.razaoSocial || '',
         nomeFantasia: empresa.nomeFantasia || null,
@@ -343,7 +354,8 @@ const empresaApiService = {
         ativo: empresa.ativo !== undefined ? empresa.ativo : true,
         dataCadastro: empresa.dataCadastro || null,
         dataAtualizacao: empresa.dataAtualizacao || null
-      }));
+        };
+      });
       
       // Retorna as empresas mapeadas
       return empresasMapeadas;
@@ -352,8 +364,8 @@ const empresaApiService = {
       // Cria um objeto de erro seguro para log que não causa problemas de serialização
       const safeError = {
         message: error.message || 'Erro desconhecido',
-        status: error.status || (response ? response.status : 'N/A'),
-        name: error.name,
+        status: error.status || 'N/A',
+        name: error.name || 'Error',
         // Converte o responseData para string para evitar problemas de serialização
         responseData: error.responseData ? 
           (typeof error.responseData === 'string' ? error.responseData : JSON.stringify(error.responseData, null, 2)) : 
@@ -409,10 +421,7 @@ const empresaApiService = {
       
       const response = await fetch(`${API_BASE_URL}/empresas/${id}`, {
         method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
+        headers: getAuthHeaders(),
         credentials: 'include',
         cache: 'no-store' // Evita cache para garantir dados atualizados
       });
@@ -600,10 +609,7 @@ const empresaApiService = {
       
       const response = await fetch(`${API_BASE_URL}/empresas/${id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
+        headers: getAuthHeaders(),
         credentials: 'include', // Importante para CORS com credenciais
         body: JSON.stringify(formattedData),
       });
@@ -611,7 +617,14 @@ const empresaApiService = {
       console.log(`[API] Resposta da atualização (status ${response.status}):`, response);
       
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        let errorData = {};
+        try {
+          const responseText = await response.text();
+          errorData = responseText ? JSON.parse(responseText) : {};
+        } catch (e) {
+          console.warn('[API] Erro ao fazer parse da resposta de erro:', e);
+          errorData = {};
+        }
         console.error(`[API] Erro na resposta da API (${response.status}):`, errorData);
         
         let errorMessage = 'Erro ao atualizar a empresa';
@@ -634,7 +647,22 @@ const empresaApiService = {
         throw error;
       }
       
-      const empresaAtualizada = await response.json();
+      // Trata resposta de sucesso que pode estar vazia
+      let empresaAtualizada = {};
+      try {
+        const responseText = await response.text();
+        if (responseText) {
+          empresaAtualizada = JSON.parse(responseText);
+        } else {
+          // Se não há resposta, assume que a atualização foi bem-sucedida
+          // e usa os dados enviados como base
+          empresaAtualizada = { id, ...formattedData };
+        }
+      } catch (e) {
+        console.warn('[API] Erro ao fazer parse da resposta de sucesso, usando dados enviados:', e);
+        empresaAtualizada = { id, ...formattedData };
+      }
+      
       console.log('[API] Empresa atualizada com sucesso:', JSON.stringify(empresaAtualizada, null, 2));
       
       // Mapeia a resposta para garantir nomes de campos consistentes
@@ -694,10 +722,7 @@ const empresaApiService = {
       
       const response = await fetch(`${API_BASE_URL}/empresas/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
+        headers: getAuthHeaders(),
         credentials: 'include',
         cache: 'no-store' // Evita cache para garantir a operação
       });

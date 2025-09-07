@@ -12,6 +12,8 @@ function App() {
     window.scrollTo(0, 0);
   }, [location]);
 
+  console.log('App.jsx: Renderizando, pathname:', location.pathname);
+
   return (
     <ToastProvider>
       <div className="app" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>

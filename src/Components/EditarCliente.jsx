@@ -10,7 +10,7 @@ import {
   FiBriefcase,
   FiAlertTriangle
 } from 'react-icons/fi';
-import { empresaApiService } from '../services/empresaApiService';
+import empresaApiService from '../services/empresaApiService';
 import { clienteApiService } from '../services/clienteApiService';
 
 const PageContainer = styled.div`
@@ -216,15 +216,25 @@ const EditarCliente = () => {
         telefone: formData.telefone ? formData.telefone.replace(/\D/g, '') : null
       };
       
-      console.log('Dados para atualização (sem idCliente):', dadosParaEnviar);
+      console.log('🔄 Iniciando atualização do cliente...');
+      console.log('📋 ID do cliente:', idCliente);
+      console.log('📋 Dados para atualização (sem idCliente):', dadosParaEnviar);
+      console.log('📋 Tipo do idCliente:', typeof idCliente);
+      console.log('📋 Valor do idCliente:', idCliente);
       
       // Atualizar cliente
-      await clienteApiService.atualizarCliente(idCliente, dadosParaEnviar);
+      const resultado = await clienteApiService.atualizarCliente(idCliente, dadosParaEnviar);
+      console.log('✅ Resultado da atualização:', resultado);
       
       // Redirecionar para a lista de clientes
       navigate('/clientes', { state: { success: 'Cliente atualizado com sucesso!' } });
     } catch (err) {
-      console.error('Erro ao atualizar cliente:', err);
+      console.error('❌ Erro completo ao atualizar cliente:', {
+        message: err.message,
+        status: err.status,
+        data: err.data,
+        stack: err.stack
+      });
       setError(err.message || 'Erro ao atualizar o cliente. Por favor, tente novamente.');
     } finally {
       setIsSubmitting(false);
@@ -403,8 +413,8 @@ const EditarCliente = () => {
               onChange={handleChange}
             >
               <option value="CLIENTE">Cliente</option>
-              <option value="GESTOR">Gestor</option>
-              <option value="ADMIN">Administrador</option>
+              <option value="ADMIN">Admin</option>
+              <option value="SUPER_ADMIN">Super Admin</option>
             </select>
           </FormGroup>
 

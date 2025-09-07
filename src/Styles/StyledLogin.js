@@ -164,6 +164,18 @@ export const Button = styled.button`
   }
 `;
 
+export const ErrorMessage = styled.p`
+  color: #ff4d4d;
+  background-color: rgba(255, 0, 0, 0.1);
+  padding: 0.75rem;
+  border-radius: 8px;
+  text-align: center;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  margin-bottom: 1rem;
+  border: 1px solid #ff4d4d;
+`;
+
 export const LinkText = styled.p`
   color: white;
   font-size: var(--font-size-sm);

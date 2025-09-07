@@ -130,7 +130,7 @@ export const Content = styled.div`
   }
 `;
 
-export const Header = styled.h1`
+export const Header = styled.div`
   font-size: 1.8rem;
   color: #fff;
   margin-bottom: 1.5rem;
@@ -236,9 +236,9 @@ export const FilterButton = styled.button`
   padding: 0.5rem 1rem;
   border: none;
   border-radius: 20px;
-  background: ${props => props.active ? 'rgba(76, 175, 80, 0.2)' : 'rgba(45, 55, 72, 0.7)'};
-  color: ${props => props.active ? '#68d391' : '#a0aec0'};
-  border: 1px solid ${props => props.active ? 'rgba(104, 211, 145, 0.3)' : 'rgba(160, 174, 192, 0.1)'};
+  background: ${props => props.$active ? 'rgba(76, 175, 80, 0.2)' : 'rgba(45, 55, 72, 0.7)'};
+  color: ${props => props.$active ? '#68d391' : '#a0aec0'};
+  border: 1px solid ${props => props.$active ? 'rgba(104, 211, 145, 0.3)' : 'rgba(160, 174, 192, 0.1)'};
   cursor: pointer;
   font-weight: 500;
   font-size: 0.85rem;
@@ -250,7 +250,7 @@ export const FilterButton = styled.button`
   min-width: max-content;
   
   &:hover {
-    background: ${props => props.active ? 'rgba(76, 175, 80, 0.3)' : 'rgba(58, 70, 89, 0.7)'};
+    background: ${props => props.$active ? 'rgba(76, 175, 80, 0.3)' : 'rgba(58, 70, 89, 0.7)'};
     color: #fff;
     transform: translateY(-1px);
   }
@@ -558,6 +558,33 @@ export const Status = styled.span`
   @media (max-width: 639px) {
     font-size: 0.7rem;
     padding: 0.25rem 0.6rem;
+  }
+`;
+
+export const LogoutButton = styled.button`
+  background: linear-gradient(135deg, #e53e3e, #c53030);
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  &:hover {
+    background: linear-gradient(135deg, #c53030, #b92a2a);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  &:active {
+    transform: translateY(0);
   }
 `;
 

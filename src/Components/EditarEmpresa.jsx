@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import { 
   formatCNPJ, 
@@ -277,6 +277,7 @@ const EditarEmpresa = () => {
   const [activeTab, setActiveTab] = useState('dados');
   const navigate = useNavigate();
   const { id } = useParams();
+  const location = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -287,7 +288,7 @@ const EditarEmpresa = () => {
     email: '',
     telefone: '',
     cep: '',
-    endereco: '',
+    logradouro: '',
     numero: '',
     complemento: '',
     bairro: '',
@@ -300,39 +301,54 @@ const EditarEmpresa = () => {
     dataFundacao: '',
   });
 
-  useEffect(() => {
-    if (id) {
-      console.log(`[EDIT MODE] Carregando dados da empresa ID: ${id}`);
-      const carregarEmpresa = async () => {
-        try {
-          console.log('Buscando dados da empresa...');
-          const empresa = await empresaApiService.buscarEmpresaPorId(id);
-          console.log('Dados recebidos da API:', empresa);
-          
-          const dataFormatada = {
-            ...empresa,
-            dataFundacao: empresa.dataFundacao ? new Date(empresa.dataFundacao).toISOString().split('T')[0] : '',
-          };
-          
-          console.log('Dados formatados para o formulário:', dataFormatada);
-          setFormData(dataFormatada);
-          
-        } catch (error) {
-          console.error('Erro detalhado ao carregar empresa:', {
-            message: error.message,
-            status: error.status,
-            data: error.data,
-            stack: error.stack
-          });
-          
-          alert(`Erro ao carregar os dados da empresa: ${error.message || 'Tente novamente mais tarde.'}`);
-          navigate('/empresas');
-        }
+  const carregarEmpresa = async (empresaId) => {
+    try {
+      console.log('Buscando dados da empresa com ID:', empresaId);
+      const empresa = await empresaApiService.buscarEmpresaPorId(empresaId);
+      console.log('Dados recebidos da API:', empresa);
+      
+      const dataFormatada = {
+        ...empresa,
+        dataFundacao: empresa.dataFundacao ? new Date(empresa.dataFundacao).toISOString().split('T')[0] : '',
       };
       
-      carregarEmpresa();
+      console.log('Dados formatados para o formulário:', dataFormatada);
+      setFormData(dataFormatada);
+      
+    } catch (error) {
+      console.error('Erro detalhado ao carregar empresa:', {
+        message: error.message,
+        status: error.status,
+        data: error.data,
+        stack: error.stack
+      });
+          
+      alert(`Erro ao carregar os dados da empresa: ${error.message || 'Tente novamente mais tarde.'}`);
+      navigate('/empresas');
     }
-  }, [id, navigate]);
+  };
+
+  useEffect(() => {
+    console.log('=== DEBUG EditarEmpresa ===');
+    console.log('ID capturado:', id);
+    console.log('Tipo do ID:', typeof id);
+    console.log('window.location.pathname:', window.location.pathname);
+    
+    // Tentar extrair ID da URL manualmente se useParams falhar
+    const pathParts = window.location.pathname.split('/');
+    const urlId = pathParts[pathParts.length - 1];
+    console.log('ID extraído da URL:', urlId);
+    
+    const finalId = id || urlId;
+    console.log('ID final a ser usado:', finalId);
+    
+    if (finalId && finalId !== 'undefined') {
+      carregarEmpresa(finalId);
+    } else {
+      console.error('ID não fornecido ou inválido');
+      setError('ID da empresa não fornecido ou inválido');
+    }
+  }, [id]);
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;

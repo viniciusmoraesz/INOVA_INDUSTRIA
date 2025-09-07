@@ -7,7 +7,10 @@ console.log('Variáveis de ambiente carregadas:', {
 });
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import App from './App.jsx';
-import Login from './Components/Login.jsx';
+import Login from './pages/Login.jsx';
+import { AuthProvider } from './contexts/AuthContext';
+import PrivateRoute from './components/PrivateRoute';
+import RoleProtectedRoute from './components/RoleProtectedRoute';
 import Contato from './Components/Contato.jsx';
 import GlobalStyled from './GlobalStyled.js';
 import CadastroProjeto from './Components/CadastroProjeto.jsx';
@@ -24,32 +27,82 @@ import EditarCliente from './Components/EditarCliente.jsx';
 import RemoverCliente from './Components/RemoverCliente.jsx';
 import CadastrarEmpresa from './Components/CadastrarEmpresa.jsx';
 import EditarEmpresa from './Components/EditarEmpresa.jsx';
+import EditarProjeto from './Components/EditarProjeto.jsx';
 import ListaEmpresas from './Components/ListaEmpresas.jsx';
 import ListaClientes from './Components/ListaClientes';
+import { Navigate } from 'react-router-dom';
 
 const AppRouter = () => {
   return (
     <Routes>
-      <Route path="/" element={<App />}>
-        <Route index element={<Login />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/*" element={<PrivateRoute><App /></PrivateRoute>}>
+        <Route index element={<MainPage />} />
         <Route path="contato" element={<Contato />} />
-        <Route path="cadastro-projetos" element={<CadastroProjeto />} />
-        <Route path="adicionar-projetos" element={<AdicionarProjeto />} />
+        <Route path="projetos" element={<CadastroProjeto />} />
+        <Route path="projetos/novo" element={
+          <RoleProtectedRoute allowedRoles={['ADMIN']}>
+            <AdicionarProjeto />
+          </RoleProtectedRoute>
+        } />
+        <Route path="projetos/editar/:id" element={<EditarProjeto />} />
+        <Route path="adicionar-projetos" element={
+          <RoleProtectedRoute allowedRoles={['ADMIN']}>
+            <AdicionarProjeto />
+          </RoleProtectedRoute>
+        } />
         <Route path="projeto/:id/nova-atividade" element={<AdicionarAtividade />} />
         <Route path="adicionar-subAtividades" element={<AdicionarSubAtividade />} />
         <Route path="projeto/:id" element={<PaginaCadaProjeto />} />
         <Route path="main-page" element={<MainPage />} />
         <Route path="header" element={<Header />} />
-        <Route path="usuariosrh" element={<Usuariosrh />} />
-        <Route path="usuariosrh/editar/:userId" element={<EditUserPage />} />
-        <Route path="clientes/novo" element={<CadastrarCliente />} />
-        <Route path="clientes/editar/:id" element={<EditarCliente />} />
-        <Route path="clientes/remover/:id" element={<RemoverCliente />} />
-        <Route path="clientes" element={<ListaClientes />} />
-        <Route path="empresas" element={<ListaEmpresas />} />
-        <Route path="empresas/nova" element={<CadastrarEmpresa />} />
-        <Route path="empresas/editar/:id" element={<EditarEmpresa />} />
+        <Route path="usuariosrh" element={
+          <RoleProtectedRoute allowedRoles={['ADMIN']}>
+            <Usuariosrh />
+          </RoleProtectedRoute>
+        } />
+        <Route path="usuariosrh/editar/:userId" element={
+          <RoleProtectedRoute allowedRoles={['ADMIN']}>
+            <EditUserPage />
+          </RoleProtectedRoute>
+        } />
+        <Route path="clientes/novo" element={
+          <RoleProtectedRoute allowedRoles={['ADMIN']}>
+            <CadastrarCliente />
+          </RoleProtectedRoute>
+        } />
+        <Route path="clientes/editar/:id" element={
+          <RoleProtectedRoute allowedRoles={['ADMIN']}>
+            <EditarCliente />
+          </RoleProtectedRoute>
+        } />
+        <Route path="clientes/remover/:id" element={
+          <RoleProtectedRoute allowedRoles={['ADMIN']}>
+            <RemoverCliente />
+          </RoleProtectedRoute>
+        } />
+        <Route path="clientes" element={
+          <RoleProtectedRoute allowedRoles={['ADMIN']}>
+            <ListaClientes />
+          </RoleProtectedRoute>
+        } />
+        <Route path="empresas" element={
+          <RoleProtectedRoute allowedRoles={['ADMIN']}>
+            <ListaEmpresas />
+          </RoleProtectedRoute>
+        } />
+        <Route path="empresas/nova" element={
+          <RoleProtectedRoute allowedRoles={['ADMIN']}>
+            <CadastrarEmpresa />
+          </RoleProtectedRoute>
+        } />
+        <Route path="empresas/editar/:id" element={
+          <RoleProtectedRoute allowedRoles={['ADMIN']}>
+            <EditarEmpresa />
+          </RoleProtectedRoute>
+        } />
       </Route>
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 };
@@ -58,7 +111,9 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <GlobalStyled />
     <Router>
-      <AppRouter />
+      <AuthProvider>
+        <AppRouter />
+      </AuthProvider>
     </Router>
   </StrictMode>
 );

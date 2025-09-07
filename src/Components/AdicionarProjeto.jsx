@@ -31,33 +31,29 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaSpinner } from 'react-icons/fa';
 import empresaApiService from '../services/empresaApiService';
-import { clienteService } from '../services/clienteService';
-import { projetoService } from '../services/projetoService';
+import { clienteApiService } from '../services/clienteApiService';
+import projetoApiService from '../services/projetoApiService';
 
 // Schema de validação com Yup
 const schema = yup.object({
   nome: yup.string()
     .required('O nome é obrigatório')
-    .max(255, 'O nome não pode ter mais de 255 caracteres'),
+    .max(100, 'O nome não pode ter mais de 100 caracteres'),
   descricao: yup.string(),
-  dataInicio: yup.date()
-    .required('A data de início é obrigatória')
-    .typeError('Por favor, selecione uma data válida')
-    .max(new Date(), 'A data de início não pode ser no futuro'),
-  dataFimPrevista: yup.date()
-    .nullable()
-    .typeError('Por favor, selecione uma data válida')
-    .min(yup.ref('dataInicio'), 'A data de término prevista não pode ser anterior à data de início'),
+  dataInicio: yup.string()
+    .required('A data de início é obrigatória'),
+  dataFimPrevista: yup.string()
+    .nullable(),
   orcamento: yup.number()
     .typeError('O orçamento deve ser um número')
     .positive('O orçamento deve ser um valor positivo')
     .nullable(),
   status: yup.string()
     .required('O status é obrigatório')
-    .oneOf(['rascunho', 'planejamento', 'andamento', 'pausado', 'concluido', 'cancelado'], 'Status inválido'),
+    .oneOf(['PLANEJAMENTO', 'EM_ANDAMENTO', 'PAUSADO', 'CONCLUIDO', 'CANCELADO'], 'Status inválido'),
   prioridade: yup.string()
     .required('A prioridade é obrigatória')
-    .oneOf(['baixa', 'media', 'alta', 'critica'], 'Prioridade inválida'),
+    .oneOf(['BAIXA', 'MEDIA', 'ALTA', 'URGENTE'], 'Prioridade inválida'),
   empresaId: yup.string()
     .required('A empresa é obrigatória'),
   clienteId: yup.string()
@@ -67,19 +63,18 @@ const schema = yup.object({
 });
 
 const statusOptions = [
-  { value: 'rascunho', label: 'Rascunho' },
-  { value: 'planejamento', label: 'Planejamento' },
-  { value: 'andamento', label: 'Em Andamento' },
-  { value: 'pausado', label: 'Pausado' },
-  { value: 'concluido', label: 'Concluído' },
-  { value: 'cancelado', label: 'Cancelado' }
+  { value: 'PLANEJAMENTO', label: 'Planejamento' },
+  { value: 'EM_ANDAMENTO', label: 'Em Andamento' },
+  { value: 'PAUSADO', label: 'Pausado' },
+  { value: 'CONCLUIDO', label: 'Concluído' },
+  { value: 'CANCELADO', label: 'Cancelado' }
 ];
 
 const prioridadeOptions = [
-  { value: 'baixa', label: 'Baixa' },
-  { value: 'media', label: 'Média' },
-  { value: 'alta', label: 'Alta' },
-  { value: 'critica', label: 'Crítica' }
+  { value: 'BAIXA', label: 'Baixa' },
+  { value: 'MEDIA', label: 'Média' },
+  { value: 'ALTA', label: 'Alta' },
+  { value: 'URGENTE', label: 'Urgente' }
 ];
 
 export default function AdicionarProjeto() {
@@ -93,6 +88,14 @@ export default function AdicionarProjeto() {
 
   const navigate = useNavigate();
 
+  // Função para validar se a data está em formato válido
+  const isValidDate = (dateString) => {
+    if (!dateString) return false;
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    return date instanceof Date && !isNaN(date) && year >= 1900 && year <= 2100;
+  };
+
   const handleBack = () => {
     setSubmitStatus(null);
     setFormError('');
@@ -102,30 +105,35 @@ export default function AdicionarProjeto() {
   const { register, handleSubmit, watch, formState: { errors }, reset, setValue } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
-      status: 'rascunho',
-      prioridade: 'media'
+      status: 'PLANEJAMENTO',
+      prioridade: 'MEDIA'
     }
   });
 
   // Watch para empresaId para filtrar clientes
   const empresaSelecionada = watch('empresaId');
 
-  // Carregar empresas iniciais
+  // Carregar clientes e empresas
   useEffect(() => {
-    const carregarEmpresas = async () => {
+    const carregarClientesEEmpresas = async () => {
       try {
         setIsLoading(true);
-        const empresasData = await empresaApiService.listarEmpresas();
-        setEmpresas(empresasData);
-      } catch (error) {
-        console.error('Erro ao carregar empresas:', error);
-        setFormError('Erro ao carregar empresas. Por favor, recarregue a página.');
+        const [clientes, empresas] = await Promise.all([
+          clienteApiService.listarClientes(),
+          empresaApiService.listarEmpresas()
+        ]);
+        setClientes(clientes);
+        setEmpresas(empresas);
+        setFormError(null);
+      } catch (err) {
+        console.error('Erro ao carregar dados:', err);
+        setFormError('Erro ao carregar clientes e empresas. Tente novamente mais tarde.');
       } finally {
         setIsLoading(false);
       }
     };
 
-    carregarEmpresas();
+    carregarClientesEEmpresas();
   }, []);
 
   // Atualizar lista de clientes quando a empresa selecionada mudar
@@ -139,11 +147,14 @@ export default function AdicionarProjeto() {
           console.log('Buscando clientes para a empresa ID:', empresaSelecionada);
           
           // Primeiro, carregar todos os clientes para depuração
-          const todosClientes = await clienteService.listarClientes();
+          const todosClientes = await clienteApiService.listarClientes();
           console.log('Todos os clientes carregados:', todosClientes);
           
           // Depois, carregar apenas os clientes da empresa selecionada
-          const clientesEmpresa = await clienteService.listarClientesPorEmpresa(empresaSelecionada);
+          // Nota: Se listarClientesPorEmpresa não existir, podemos filtrar localmente
+          const clientesEmpresa = todosClientes.filter(cliente => 
+            String(cliente.idEmpresa) === String(empresaSelecionada)
+          );
           console.log('Clientes da empresa:', clientesEmpresa);
           
           // Atualizar o estado com os clientes filtrados
@@ -173,58 +184,64 @@ export default function AdicionarProjeto() {
   }, [empresaSelecionada, setValue]);
 
   const onSubmit = async (data) => {
+    console.log('🚀 onSubmit chamado com dados:', data);
     try {
       console.log('Dados do formulário submetidos:', data);
       setIsSubmitting(true);
       setSubmitStatus(null);
       setFormError('');
 
-      // Validar dados antes de enviar
-      if (!data.empresaId) {
-        throw new Error('Selecione uma empresa');
-      }
-      if (!data.clienteId) {
-        throw new Error('Selecione um cliente');
+      // Validação adicional
+      if (!data.nome || data.nome.trim() === '') {
+        console.error('❌ Campo nome está vazio:', data.nome);
+        setFormError('Nome do projeto é obrigatório');
+        setIsSubmitting(false);
+        return;
       }
 
-      // Converter dados para o formato esperado
-      const dadosProjeto = {
-        ...data,
-        dataInicio: new Date(data.dataInicio),
-        dataFimPrevista: data.dataFimPrevista ? new Date(data.dataFimPrevista) : undefined,
-        orcamento: data.orcamento ? parseFloat(data.orcamento) : undefined,
-        ativo: true
+      // Formatar os dados para o formato esperado pelo serviço
+      const projetoData = {
+        titulo: data.nome.trim(), // Frontend usa 'nome', backend espera 'titulo'
+        descricao: data.descricao,
+        dataInicio: data.dataInicio && isValidDate(data.dataInicio) ? data.dataInicio : null,
+        dataTerminoPrevista: data.dataFimPrevista && data.dataFimPrevista.trim() !== '' && isValidDate(data.dataFimPrevista) ? data.dataFimPrevista : null,
+        orcamento: data.orcamento ? parseFloat(data.orcamento) : null,
+        status: data.status, // Já está no formato correto do enum
+        prioridade: data.prioridade, // Já está no formato correto do enum
+        idEmpresa: parseInt(data.empresaId),
+        idGerente: data.clienteId ? parseInt(data.clienteId) : null // Mapear cliente como gerente por enquanto
       };
 
-      console.log('Dados do projeto a serem enviados:', dadosProjeto);
-
+      console.log('📋 Dados do formulário original:', data);
+      console.log('📋 Dados formatados para envio:', projetoData);
+      console.log('🔍 Cliente ID enviado:', data.clienteId, 'Tipo:', typeof data.clienteId);
+      console.log('🔍 ID Gerente final:', projetoData.idGerente, 'Tipo:', typeof projetoData.idGerente);
+      console.log('🔍 Testando conectividade com o backend...');
+      
+      // Primeiro, testar se o backend está acessível
       try {
-        // Chamar o serviço para criar o projeto
-        const projetoCriado = await projetoService.criarProjeto(dadosProjeto);
-        console.log('Projeto criado com sucesso:', projetoCriado);
-        
-        // Atualizar a lista de projetos
-        const projetosAtualizados = await projetoService.listarProjetos();
-        console.log('Lista de projetos atualizada:', projetosAtualizados);
-        
-        setSubmitStatus('success');
-        
-        // Redirecionar após 2 segundos
-        setTimeout(() => {
-          reset();
-          setSubmitStatus(null);
-          navigate('/cadastro-projetos');
-        }, 2000);
-        
-      } catch (serviceError) {
-        console.error('Erro no serviço ao criar projeto:', serviceError);
-        throw serviceError; // Re-lança para ser capturado pelo catch externo
+        const testResponse = await fetch('http://localhost:8080/auth/login', {
+          method: 'OPTIONS'
+        });
+        console.log('✅ Backend acessível:', testResponse.status);
+      } catch (testError) {
+        console.error('❌ Backend não acessível:', testError);
+        throw new Error('Backend não está respondendo. Verifique se o servidor está rodando.');
       }
       
+      // Chamar o serviço para criar o projeto
+      await projetoApiService.criarProjeto(projetoData);
+      
+      setSubmitStatus('success');
+      setTimeout(() => {
+        reset();
+        setSubmitStatus(null);
+        navigate('/projetos');
+      }, 2000);
     } catch (error) {
-      console.error('Erro ao processar formulário:', error);
+      console.error('Erro ao criar projeto:', error);
       setSubmitStatus('error');
-      setFormError(error.message || 'Erro ao criar o projeto. Por favor, verifique os dados e tente novamente.');
+      setFormError(error.message || 'Erro ao criar projeto');
     } finally {
       setIsSubmitting(false);
     }
@@ -254,10 +271,14 @@ export default function AdicionarProjeto() {
           <strong>Sucesso!</strong> Projeto criado com sucesso!
         </SuccessMessage>
       )}
-      
-      {formError && <ErrorMessageContainer>{formError}</ErrorMessageContainer>}
 
-      <Form onSubmit={handleSubmit(onSubmit)}>
+      <Form onSubmit={(e) => {
+        console.log('📝 Form onSubmit event triggered');
+        handleSubmit(onSubmit)(e);
+      }}>
+        {formError && <ErrorMessage>{formError}</ErrorMessage>}
+        {submitStatus && <SuccessMessage>{submitStatus}</SuccessMessage>}
+        
         <GridContainer>
           <FormGroup>
             <Label>Nome do Projeto <RequiredLabel>*</RequiredLabel></Label>
@@ -265,6 +286,10 @@ export default function AdicionarProjeto() {
               type="text"
               {...register('nome')}
               disabled={isSubmitting}
+              onChange={(e) => {
+                console.log('📝 Nome field changed:', e.target.value);
+                register('nome').onChange(e);
+              }}
             />
             {errors.nome && <ErrorMessage>{errors.nome.message}</ErrorMessage>}
           </FormGroup>
@@ -372,7 +397,7 @@ export default function AdicionarProjeto() {
                 {empresaSelecionada ? 'Selecione um cliente' : 'Selecione uma empresa primeiro'}
               </option>
               {clientesFiltrados.map((cliente) => (
-                <option key={cliente.id} value={cliente.id}>
+                <option key={cliente.idCliente} value={cliente.idCliente}>
                   {cliente.nome} - {cliente.email}
                 </option>
               ))}
@@ -382,7 +407,14 @@ export default function AdicionarProjeto() {
         </GridContainer>
 
         <ButtonContainer>
-          <SubmitButton type="submit" disabled={isSubmitting}>
+          <SubmitButton 
+            type="submit" 
+            disabled={isSubmitting}
+            onClick={(e) => {
+              console.log('🔘 Submit button clicked');
+              console.log('Form data before submit:', watch());
+            }}
+          >
             {isSubmitting ? (
               <>
                 <FaSpinner className="spin" /> Salvando...

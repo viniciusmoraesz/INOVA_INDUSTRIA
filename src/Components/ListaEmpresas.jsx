@@ -374,6 +374,7 @@ const ActionButton = styled(Button)`
 `;
 
 const ListaEmpresas = () => {
+  console.log('ListaEmpresas: Componente carregado!');
   const navigate = useNavigate();
   const [empresas, setEmpresas] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -391,11 +392,13 @@ const ListaEmpresas = () => {
     try {
       setLoading(true);
       setError(null);
+      console.log('ListaEmpresas: Iniciando carregamento de empresas...');
       const data = await empresaApiService.listarEmpresas();
+      console.log('ListaEmpresas: Dados recebidos:', data);
       setEmpresas(data);
       setTotalPages(Math.ceil(data.length / itemsPerPage));
     } catch (err) {
-      console.error('Erro ao carregar empresas:', err);
+      console.error('ListaEmpresas: Erro ao carregar empresas:', err);
       
       // Extrai detalhes do erro de forma segura
       const errorMessage = err.message || 'Erro desconhecido ao carregar empresas';
@@ -422,13 +425,31 @@ const ListaEmpresas = () => {
   };
 
   useEffect(() => {
+    console.log('ListaEmpresas - Componente montado, carregando empresas...');
     carregarEmpresas();
-  }, [retryCount]);
+  }, []);
+
+  // Debug: verificar estrutura dos dados após carregamento
+  useEffect(() => {
+    console.log('=== DEBUG ListaEmpresas ===');
+    console.log('Total de empresas carregadas:', empresas.length);
+    console.log('Primeiras 3 empresas:', empresas.slice(0, 3));
+    empresas.forEach((empresa, index) => {
+      console.log(`Empresa ${index}:`, {
+        id: empresa.id,
+        razaoSocial: empresa.razaoSocial,
+        nomeFantasia: empresa.nomeFantasia,
+        hasId: empresa.hasOwnProperty('id'),
+        idType: typeof empresa.id
+      });
+    });
+  }, [empresas]);
 
   const handleRetry = () => {
     setRetryCount(prev => prev + 1);
   };
 
+// ...
   const handleSearch = (e) => {
     e.preventDefault();
     // Reset to first page when searching
@@ -589,10 +610,12 @@ const ListaEmpresas = () => {
     );
   }
 
+  console.log('ListaEmpresas: Renderizando componente...');
+  
   return (
     <PageContainer>
       {showDeleteModal && (
-        <ModalOverlay onClick={(e) => e.target === e.currentTarget && setShowDeleteModal(false)}>
+        <ModalOverlay>
           <ModalContent>
             <ModalHeader>
               <h3>Confirmar Exclusão</h3>
@@ -678,7 +701,12 @@ const ListaEmpresas = () => {
                     gap: '0.5rem'
                   }}>
                     <ActionButton 
-                      onClick={() => navigate(`/empresas/editar/${empresa.id}`)}
+                      onClick={() => {
+                        console.log('Clicando em editar empresa:', empresa);
+                        console.log('ID da empresa:', empresa.id);
+                        console.log('Navegando para:', `/empresas/editar/${empresa.id}`);
+                        navigate(`/empresas/editar/${empresa.id}`);
+                      }}
                       title="Editar"
                       style={{ margin: 0 }}
                     >

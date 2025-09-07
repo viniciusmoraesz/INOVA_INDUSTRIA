@@ -1,21 +1,46 @@
-const API_BASE_URL = 'http://localhost:8080/api';
+const API_BASE_URL = 'http://localhost:8080';
+
+// Função para obter headers de autorização
+const getAuthHeaders = () => {
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const headers = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'Origin': 'http://localhost:5173'
+  };
+  
+  if (user.token) {
+    headers['Authorization'] = `Bearer ${user.token}`;
+  }
+  
+  return headers;
+};
+
+// Configuração padrão para todas as requisições
+const defaultOptions = {
+  credentials: 'include',  // Importante para CORS com credenciais
+  mode: 'cors',
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'Origin': 'http://localhost:5173'
+  }
+};
 
 // Helper function to handle API responses
 const handleResponse = async (response) => {
-  console.log('Resposta recebida:', {
-    status: response.status,
-    statusText: response.statusText,
-    url: response.url,
-    headers: Object.fromEntries(response.headers.entries())
-  });
-  
   const contentType = response.headers.get('content-type');
   const isJson = contentType && contentType.includes('application/json');
+  
+  // Para respostas vazias (como 204 No Content)
+  if (response.status === 204) {
+    return null;
+  }
+  
   let data = null;
   
   try {
     const responseText = await response.text();
-    console.log('Conteúdo da resposta:', responseText);
     
     if (responseText && isJson) {
       try {
@@ -33,22 +58,31 @@ const handleResponse = async (response) => {
   }
 
   if (!response.ok) {
-    const error = new Error(data.message || response.statusText || 'Erro na requisição');
-    error.status = response.status;
-    error.data = data;
-    error.response = response;
-    
-    if (data.errors) {
-      error.errors = data.errors;
-      error.message = 'Erro de validação: ' + Object.values(data.errors).join(', ');
-    }
-    
     console.error('Erro na resposta da API:', {
       status: response.status,
       statusText: response.statusText,
       data: data,
       url: response.url
     });
+    
+    // Extract error message from response
+    let errorMessage = 'Erro na requisição';
+    if (data && typeof data === 'object') {
+      if (data.error) {
+        errorMessage = data.error;
+      } else if (data.message) {
+        errorMessage = data.message;
+      } else if (data.details) {
+        errorMessage = data.details;
+      }
+    } else if (typeof data === 'string') {
+      errorMessage = data;
+    }
+    
+    const error = new Error(errorMessage);
+    error.status = response.status;
+    error.data = data;
+    error.response = response;
     
     throw error;
   }
@@ -58,7 +92,6 @@ const handleResponse = async (response) => {
 
 // Helper function to format client data
 const formatClienteData = (data) => {
-  // Não incluir idCliente nos dados formatados, pois ele já está na URL
   const formattedData = {
     idEmpresa: data.idEmpresa,
     nome: data.nome,
@@ -85,127 +118,144 @@ const formatClienteData = (data) => {
 export const clienteApiService = {
   // Create a new client
   async criarCliente(clienteData) {
-    try {
-      const formattedData = formatClienteData(clienteData);
-      console.log('Enviando dados formatados para a API:', JSON.stringify(formattedData, null, 2));
-      
-      const response = await fetch(`${API_BASE_URL}/clientes`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formattedData),
-      });
-
-      console.log('Requisição enviada, aguardando resposta...');
-      return await handleResponse(response);
-    } catch (error) {
-      console.error('Erro ao criar cliente:', {
-        error: error,
-        message: error.message,
-        response: error.response,
-        status: error.status,
-        data: error.data
-      });
-      
-      let errorMessage = 'Erro ao processar a requisição';
-      if (error.status === 400) {
-        errorMessage = 'Dados inválidos. Verifique os campos e tente novamente.';
-        if (error.data) {
-          errorMessage += `\nDetalhes: ${JSON.stringify(error.data)}`;
-        }
-      } else if (error.status === 409) {
-        errorMessage = 'Já existe um cliente cadastrado com este CPF.';
-      } else if (error.status === 500) {
-        errorMessage = 'Erro interno do servidor. Tente novamente mais tarde.';
-      }
-      
-      const enhancedError = new Error(errorMessage);
-      enhancedError.originalError = error;
-      throw enhancedError;
-    }
+    const formattedData = formatClienteData(clienteData);
+    
+    console.log(`[API] Criando cliente - dados originais:`, clienteData);
+    console.log(`[API] Criando cliente - dados formatados:`, formattedData);
+    console.log(`[API] URL: ${API_BASE_URL}/clientes`);
+    
+    const response = await fetch(`${API_BASE_URL}/clientes`, {
+      ...defaultOptions,
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(formattedData)
+    });
+    
+    return handleResponse(response);
   },
 
   // List all clients
   async listarClientes() {
-    try {
-      console.log('Buscando lista de clientes...');
-      const response = await fetch(`${API_BASE_URL}/clientes`);
-      console.log('Resposta da lista de clientes recebida, status:', response.status);
-      return await handleResponse(response);
-    } catch (error) {
-      console.error('Erro ao listar clientes:', error);
-      throw error;
-    }
+    const response = await fetch(`${API_BASE_URL}/clientes`, {
+      ...defaultOptions,
+      method: 'GET',
+      headers: getAuthHeaders()
+    });
+    
+    return handleResponse(response);
   },
 
   // Get client by ID
   async buscarClientePorId(idCliente) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/clientes/${idCliente}`);
-      const data = await handleResponse(response);
-      // Garante que o idCliente está presente nos dados retornados
-      if (data && !data.idCliente) {
-        data.idCliente = idCliente;
-      }
-      return data;
-    } catch (error) {
-      console.error(`Erro ao buscar cliente com ID ${idCliente}:`, error);
-      throw error;
-    }
+    const response = await fetch(`${API_BASE_URL}/clientes/${idCliente}`, {
+      ...defaultOptions,
+      method: 'GET',
+      headers: getAuthHeaders()
+    });
+    
+    return handleResponse(response);
   },
 
   // Update client
   async atualizarCliente(idCliente, clienteData) {
-    try {
-      // Remove o idCliente dos dados, pois ele já está na URL
-      const { idCliente: _, ...dataWithoutId } = clienteData;
-      const formattedData = formatClienteData(dataWithoutId);
-      
-      console.log('Atualizando cliente com dados:', formattedData);
-      console.log('ID do cliente na URL:', idCliente);
-      
-      const response = await fetch(`${API_BASE_URL}/clientes/${idCliente}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formattedData),
-      });
-
-      return await handleResponse(response);
-    } catch (error) {
-      console.error(`Erro ao atualizar cliente com ID ${id}:`, error);
-      
-      let errorMessage = 'Erro ao atualizar o cliente';
-      if (error.status === 400) {
-        errorMessage = 'Dados inválidos. Verifique os campos e tente novamente.';
-        if (error.data) {
-          errorMessage += `\nDetalhes: ${JSON.stringify(error.data)}`;
+    console.log('🔄 Atualizando cliente:', { idCliente, clienteData });
+    
+    const { idCliente: _, ...dataWithoutId } = clienteData;
+    const formattedData = formatClienteData(dataWithoutId);
+    
+    console.log('📤 Dados formatados para envio:', formattedData);
+    
+    const response = await fetch(`${API_BASE_URL}/clientes/${idCliente}`, {
+      ...defaultOptions,
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(formattedData)
+    });
+    
+    console.log('📥 Resposta da API:', { 
+      status: response.status, 
+      statusText: response.statusText,
+      headers: Object.fromEntries(response.headers.entries())
+    });
+    
+    // Handle empty or successful responses gracefully
+    if (response.ok) {
+      try {
+        const responseText = await response.text();
+        console.log('📄 Texto da resposta:', responseText);
+        
+        if (!responseText || responseText.trim() === '') {
+          console.log('✅ Resposta vazia - usando dados enviados como fallback');
+          return { ...formattedData, idCliente };
         }
+        
+        const data = JSON.parse(responseText);
+        console.log(' Dados parseados com sucesso:', data);
+        return data;
+      } catch (parseError) {
+        console.log('⚠️ Erro ao fazer parse da resposta de sucesso:', parseError.message);
+        return { ...formattedData, idCliente };
       }
-      
-      const enhancedError = new Error(errorMessage);
-      enhancedError.originalError = error;
-      throw enhancedError;
     }
+    
+    // Handle error responses
+    let errorData;
+    try {
+      const responseText = await response.text();
+      console.log('📄 Texto completo da resposta de erro:', responseText);
+      
+      // Tenta fazer parse como JSON se possível
+      if (responseText.trim()) {
+        try {
+          errorData = JSON.parse(responseText);
+          console.log('📋 Dados de erro parseados como JSON:', errorData);
+        } catch (parseError) {
+          console.log('⚠️ Não foi possível fazer parse JSON, mantendo como texto:', responseText);
+          errorData = responseText;
+        }
+      } else {
+        console.log('⚠️ Resposta vazia do servidor');
+        errorData = 'Resposta vazia do servidor';
+      }
+    } catch (textError) {
+      console.log('⚠️ Erro ao ler resposta de erro:', textError.message);
+      errorData = 'Erro ao ler resposta do servidor';
+    }
+    
+    let errorMessage = `Erro ao atualizar cliente`;
+    if (errorData && typeof errorData === 'object') {
+      if (errorData.error) {
+        errorMessage = errorData.error;
+      } else if (errorData.message) {
+        errorMessage = errorData.message;
+      } else if (errorData.details) {
+        errorMessage = errorData.details;
+      }
+    } else if (typeof errorData === 'string') {
+      errorMessage = errorData;
+    }
+    
+    const error = new Error(errorMessage);
+    error.status = response.status;
+    error.data = errorData;
+    error.response = response;
+    
+    throw error;
   },
 
   // Delete client
-  async excluirCliente(idCliente) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/clientes/${idCliente}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw await handleResponse(response);
-      }
-      // No content on successful delete
-      return {}; 
-    } catch (error) {
-      console.error(`Erro ao excluir cliente com ID ${idCliente}:`, error);
-      throw error;
-    }
+  async removerCliente(idCliente) {
+    const response = await fetch(`${API_BASE_URL}/clientes/${idCliente}`, {
+      ...defaultOptions,
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    
+    return handleResponse(response);
   },
+
+  // Alias para compatibilidade
+  async excluirCliente(idCliente) {
+    return this.removerCliente(idCliente);
+  }
 };
