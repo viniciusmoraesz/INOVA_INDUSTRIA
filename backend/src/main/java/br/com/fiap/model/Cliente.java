@@ -3,6 +3,7 @@ package br.com.fiap.model;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class Cliente {
     private Long idCliente;
@@ -16,6 +17,7 @@ public class Cliente {
     private String cargo;
     private String departamento;
     private String role;
+    @JsonIgnore
     private String senha;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime dataCadastro;

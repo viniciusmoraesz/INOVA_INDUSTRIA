@@ -3,6 +3,7 @@ package br.com.fiap.resource;
 import br.com.fiap.dao.ClienteDAO;
 import br.com.fiap.model.Cliente;
 import br.com.fiap.service.TokenService;
+import br.com.fiap.security.PasswordHasher;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -37,7 +38,9 @@ public class AuthResource {
 
                 System.out.println("Cliente found: " + cliente.getNome());
 
-                if (!cliente.getSenha().equals(senha)) {
+
+                // Use Argon2 verify for password check
+                if (cliente.getSenha() == null || !PasswordHasher.verify(cliente.getSenha(), senha.toCharArray())) {
                     System.out.println("Password mismatch");
                     throw new WebApplicationException("Credenciais inválidas", Response.Status.UNAUTHORIZED);
                 }

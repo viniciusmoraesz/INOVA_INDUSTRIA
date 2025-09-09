@@ -4,6 +4,7 @@ import br.com.fiap.dao.ClienteDAO;
 import br.com.fiap.dto.CadastroClienteDTO;
 import br.com.fiap.dto.ClienteResponseDTO;
 import br.com.fiap.model.Cliente;
+import br.com.fiap.security.PasswordHasher;
 import jakarta.ws.rs.*;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.core.MediaType;
@@ -53,7 +54,8 @@ public class ClienteResource {
                     dto.getCargo(),
                     dto.getDepartamento(),
                     dto.getRole(),
-                    dto.getSenha()
+                    // Hash the password using Argon2id
+                    dto.getSenha() == null ? null : PasswordHasher.hash(dto.getSenha().toCharArray())
             );
 
             long id = dao.cadastrar(cliente);
@@ -62,6 +64,9 @@ public class ClienteResource {
                             "Erro ao recuperar cliente cadastrado",
                             Response.Status.INTERNAL_SERVER_ERROR
                     ));
+
+            // Nunca exponha a senha em respostas (já não está no DTO), mas garanta que não vazará via logs
+            cliente.setSenha(null);
 
             return Response
                     .status(Response.Status.CREATED)
@@ -166,7 +171,7 @@ public class ClienteResource {
 
             // CORREÇÃO: VERIFICAR SE A SENHA NÃO É NULA ANTES DE ATUALIZAR
             if (dto.getSenha() != null && !dto.getSenha().trim().isEmpty()) {
-                cliente.setSenha(dto.getSenha());
+                cliente.setSenha(PasswordHasher.hash(dto.getSenha().toCharArray()));
             }
 
             if (dto.getCpf() != null) {
@@ -177,6 +182,7 @@ public class ClienteResource {
             dao.atualizar(cliente);
             LOGGER.info("Cliente atualizado com sucesso: " + id);
 
+            cliente.setSenha(null); // por segurança
             return Response.ok(toDto(cliente)).build();
 
         } catch (WebApplicationException e) {
