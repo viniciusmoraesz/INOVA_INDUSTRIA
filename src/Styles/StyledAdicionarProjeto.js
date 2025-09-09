@@ -2,11 +2,20 @@ import styled from "styled-components";
 
 export const PageContainer = styled.div`
   padding: 2rem;
-  max-width: 800px;
-  margin: 50px auto;
+  max-width: 1200px;
+  margin: 30px auto;
   background-color: #ffffff;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: calc(100% - 4rem);
+  box-sizing: border-box;
+  overflow: hidden;
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+    width: calc(100% - 2rem);
+    margin: 15px auto;
+  }
 `;
 
 export const Title = styled.h1`
@@ -26,6 +35,8 @@ export const FormGroup = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  width: 100%;
+  min-width: 0; /* Prevents flex items from overflowing */
 `;
 
 export const Label = styled.label`
@@ -66,11 +77,27 @@ export const Select = styled.select`
   border: 1px solid #e0e0e0;
   border-radius: 4px;
   font-size: 1rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  background-color: white;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23333' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 16px 12px;
+  padding-right: 2.5rem;
 
   &:focus {
     outline: none;
     border-color: #007bff;
     box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  }
+
+  &[disabled] {
+    background-color: #f8f9fa;
+    opacity: 0.8;
+    cursor: not-allowed;
   }
 `;
 
@@ -78,26 +105,6 @@ export const ErrorMessage = styled.div`
   color: #dc3545;
   font-size: 0.875rem;
   margin-top: 0.25rem;
-`;
-
-export const SubmitButton = styled.button`
-  background-color: #007bff;
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 4px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background-color 0.2s;
-
-  &:hover {
-    background-color: #0056b3;
-  }
-
-  &:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
-  }
 `;
 
 export const DateInput = styled(Input)`
@@ -110,9 +117,14 @@ export const DateInput = styled(Input)`
 
 export const GridContainer = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 1.5rem;
   margin-bottom: 1.5rem;
+  width: 100%;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 export const FullWidthInput = styled(Input)`
@@ -124,13 +136,55 @@ export const FullWidthTextArea = styled(TextArea)`
 `;
 
 export const StatusSelect = styled(Select)`
-  grid-column: 1 / -1;
+  width: 100%;
+  min-width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+`;
+
+export const SubmitButton = styled.button`
+  background-color: #4a6cf7;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-width: 120px;
+
+  &:hover {
+    background-color: #3a5ce4;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    transform: none;
+    opacity: 0.7;
+  }
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
 `;
 
 export const ButtonContainer = styled.div`
   display: flex;
   justify-content: center;
   margin-top: 2rem;
+  gap: 1rem;
 `;
 
 export const SuccessMessage = styled.div`

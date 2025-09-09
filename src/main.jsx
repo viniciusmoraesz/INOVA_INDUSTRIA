@@ -1,5 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import Logout from './pages/Logout';
 
 console.log('Variáveis de ambiente carregadas:', {
   hasHuggingFaceKey: !!import.meta.env.VITE_HUGGINGFACE_API_KEY,
@@ -36,9 +37,11 @@ const AppRouter = () => {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/logout" element={<Logout />} />
+      <Route path="contato" element={<Contato />} />
       <Route path="/*" element={<PrivateRoute><App /></PrivateRoute>}>
         <Route index element={<MainPage />} />
-        <Route path="contato" element={<Contato />} />
+        
         <Route path="projetos" element={<CadastroProjeto />} />
         <Route path="projetos/novo" element={
           <RoleProtectedRoute allowedRoles={['ADMIN']}>
@@ -110,10 +113,10 @@ const AppRouter = () => {
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <GlobalStyled />
-    <Router>
-      <AuthProvider>
+    <AuthProvider>
+      <Router>
         <AppRouter />
-      </AuthProvider>
-    </Router>
-  </StrictMode>
+      </Router>
+    </AuthProvider>
+  </StrictMode>,
 );

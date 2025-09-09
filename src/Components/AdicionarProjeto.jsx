@@ -99,7 +99,7 @@ export default function AdicionarProjeto() {
   const handleBack = () => {
     setSubmitStatus(null);
     setFormError('');
-    navigate('/cadastro-projetos');
+    navigate('/projetos');
   };
 
   const { register, handleSubmit, watch, formState: { errors }, reset, setValue } = useForm({
@@ -266,18 +266,16 @@ export default function AdicionarProjeto() {
       
       <Title>Adicionar Novo Projeto</Title>
       
-      {submitStatus === 'success' && (
-        <SuccessMessage>
-          <strong>Sucesso!</strong> Projeto criado com sucesso!
-        </SuccessMessage>
-      )}
-
       <Form onSubmit={(e) => {
         console.log('📝 Form onSubmit event triggered');
         handleSubmit(onSubmit)(e);
       }}>
         {formError && <ErrorMessage>{formError}</ErrorMessage>}
-        {submitStatus && <SuccessMessage>{submitStatus}</SuccessMessage>}
+        {submitStatus === 'success' && (
+          <SuccessMessage>
+            <strong>Sucesso!</strong> Projeto criado com sucesso!
+          </SuccessMessage>
+        )}
         
         <GridContainer>
           <FormGroup>

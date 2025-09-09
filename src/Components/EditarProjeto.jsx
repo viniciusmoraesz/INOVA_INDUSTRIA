@@ -309,6 +309,70 @@ const RequiredLabel = styled.span`
   margin-left: 2px;
 `;
 
+// Modal Styles
+const SuccessModal = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`;
+
+const ModalContent = styled.div`
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  max-width: 500px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+`;
+
+const ModalTitle = styled.h3`
+  margin-top: 0;
+  color: #2d3436;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+`;
+
+const ModalMessage = styled.p`
+  color: #495057;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+`;
+
+const ModalButton = styled.button`
+  background: #4a6cf7;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0.5rem;
+
+  &:hover {
+    background: #3a5ce4;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
 // Validation schema
 const schema = yup.object().shape({
   titulo: yup.string()
@@ -439,6 +503,21 @@ export default function EditarProjeto() {
     }
   }, [id, reset]);
 
+  const formatDateToLocalDate = (dateString) => {
+    if (!dateString) return null;
+    // If it's already in YYYY-MM-DD format, return as is
+    if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      return dateString;
+    }
+    // Otherwise, convert from ISO string to YYYY-MM-DD
+    const date = new Date(dateString);
+    return date.toISOString().split('T')[0];
+  };
+
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
   const onSubmit = async (data) => {
     try {
       setIsSubmitting(true);
@@ -451,8 +530,8 @@ export default function EditarProjeto() {
       const projetoData = {
         titulo: data.titulo.trim(),
         descricao: data.descricao?.trim() || '',
-        dataInicio: data.dataInicio,
-        dataTerminoPrevista: data.dataTerminoPrevista || null,
+        dataInicio: formatDateToLocalDate(data.dataInicio),
+        dataTerminoPrevista: formatDateToLocalDate(data.dataTerminoPrevista),
         orcamento: data.orcamento ? parseFloat(data.orcamento) : null,
         status: data.status,
         prioridade: data.prioridade,
@@ -465,20 +544,30 @@ export default function EditarProjeto() {
       await projetoApiService.atualizarProjeto(id, projetoData);
       
       setSubmitStatus('success');
-      setTimeout(() => {
-        navigate('/cadastro-projetos');
-      }, 1500);
+      setShowSuccessModal(true);
 
     } catch (error) {
       console.error('Erro ao atualizar projeto:', error);
-      setFormError('Erro ao atualizar projeto: ' + error.message);
+      const errorMsg = error.response?.data?.message || error.message || 'Erro ao atualizar projeto';
+      setFormError(errorMsg);
+      setErrorMessage(errorMsg);
+      setShowErrorModal(true);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleBack = () => {
-    navigate('/cadastro-projetos');
+    navigate('/projetos'); // Always go back to the projetos list
+  };
+
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false);
+    navigate('/projetos'); // Redirect to projetos list after successful edit
+  };
+
+  const handleCloseErrorModal = () => {
+    setShowErrorModal(false);
   };
 
   if (isLoading) {
@@ -499,17 +588,37 @@ export default function EditarProjeto() {
         <Title>Editar Projeto</Title>
       </Header>
 
-      {submitStatus === 'success' && (
-        <SuccessMessage>
-          <FiSave size={18} />
-          Projeto atualizado com sucesso!
-        </SuccessMessage>
+      {/* Modais */}
+      {showSuccessModal && (
+        <SuccessModal>
+          <ModalContent>
+            <ModalTitle>
+              <FiSave size={24} />
+              Sucesso!
+            </ModalTitle>
+            <ModalMessage>Projeto atualizado com sucesso!</ModalMessage>
+            <ModalButton onClick={handleCloseSuccessModal}>
+              <FiArrowLeft size={18} />
+              Voltar para o Projeto
+            </ModalButton>
+          </ModalContent>
+        </SuccessModal>
       )}
 
-      {formError && (
-        <ErrorDiv>
-          {formError}
-        </ErrorDiv>
+      {showErrorModal && (
+        <SuccessModal>
+          <ModalContent>
+            <ModalTitle>
+              <FiX size={24} color="#e63946" />
+              Erro
+            </ModalTitle>
+            <ModalMessage>{errorMessage}</ModalMessage>
+            <ModalButton onClick={handleCloseErrorModal} style={{ background: '#e63946' }}>
+              <FiX size={18} />
+              Fechar
+            </ModalButton>
+          </ModalContent>
+        </SuccessModal>
       )}
 
       <Card>

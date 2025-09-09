@@ -168,15 +168,22 @@ const EditarCliente = () => {
           throw new Error('Cliente não encontrado');
         }
         
-        // Garantir que dataNascimento seja uma string antes de tentar usar split
-        const dataNascimento = cliente.dataNascimento || '';
-        const dataFormatada = typeof dataNascimento === 'string' && dataNascimento.includes('T') 
-          ? dataNascimento.split('T')[0] 
-          : dataNascimento;
-          
+        // Formatar dataNascimento que pode vir como array [ano, mês, dia]
+        let dataFormatada = '';
+        if (Array.isArray(cliente.dataNascimento) && cliente.dataNascimento.length === 3) {
+          // Converter array [ano, mês, dia] para string 'YYYY-MM-DD'
+          const [year, month, day] = cliente.dataNascimento;
+          dataFormatada = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        } else if (typeof cliente.dataNascimento === 'string') {
+          // Se for string, verificar se tem o formato ISO
+          dataFormatada = cliente.dataNascimento.includes('T')
+            ? cliente.dataNascimento.split('T')[0]
+            : cliente.dataNascimento;
+        }
+        
         setFormData({
           ...cliente,
-          dataNascimento: dataFormatada || ''
+          dataNascimento: dataFormatada
         });
         
         setError('');
@@ -324,39 +331,6 @@ const EditarCliente = () => {
             </FormGroup>
 
             <FormGroup>
-              <label>Telefone</label>
-              <div style={{ position: 'relative' }}>
-                <FiPhone style={{
-                  position: 'absolute',
-                  left: '10px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: '#6c757d'
-                }} />
-                <input
-                  type="text"
-                  name="telefone"
-                  value={formData.telefone || ''}
-                  onChange={handleChange}
-                  placeholder="(00) 00000-0000"
-                  style={{ paddingLeft: '35px' }}
-                />
-              </div>
-            </FormGroup>
-          </FormRow>
-
-          <FormRow>
-            <FormGroup>
-              <label>Data de Nascimento</label>
-              <input
-                type="date"
-                name="dataNascimento"
-                value={formData.dataNascimento || ''}
-                onChange={handleChange}
-              />
-            </FormGroup>
-
-            <FormGroup>
               <label>Empresa</label>
               <select
                 name="idEmpresa"
@@ -405,18 +379,31 @@ const EditarCliente = () => {
             </FormGroup>
           </FormRow>
 
-          <FormGroup>
-            <label>Função</label>
-            <select
-              name="role"
-              value={formData.role || 'CLIENTE'}
-              onChange={handleChange}
-            >
-              <option value="CLIENTE">Cliente</option>
-              <option value="ADMIN">Admin</option>
-              <option value="SUPER_ADMIN">Super Admin</option>
-            </select>
-          </FormGroup>
+          <FormRow>
+            <FormGroup>
+              <label>Data de Nascimento</label>
+              <input
+                type="date"
+                name="dataNascimento"
+                value={formData.dataNascimento || ''}
+                onChange={handleChange}
+                max={new Date().toISOString().split('T')[0]}
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <label>Função</label>
+              <select
+                name="role"
+                value={formData.role || 'CLIENTE'}
+                onChange={handleChange}
+              >
+                <option value="CLIENTE">Cliente</option>
+                <option value="ADMIN">Admin</option>
+                <option value="SUPER_ADMIN">Super Admin</option>
+              </select>
+            </FormGroup>
+          </FormRow>
 
           <ButtonGroup>
             <Button
