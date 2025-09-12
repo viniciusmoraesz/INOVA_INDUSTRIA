@@ -10,6 +10,58 @@ import {
   FiBriefcase,
   FiAlertTriangle
 } from 'react-icons/fi';
+
+// Função para formatar CPF
+const formatCPF = (value) => {
+  if (!value) return '';
+  
+  // Remove tudo que não for dígito
+  const numericValue = value.replace(/\D/g, '');
+  
+  // Limita a 11 dígitos
+  const limitedValue = numericValue.slice(0, 11);
+  
+  // Aplica a máscara
+  return limitedValue
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d{1,2})/, '$1-$2')
+    .replace(/(\-\d{2})\d+?$/, '$1');
+};
+
+// Função para formatar telefone
+const formatPhone = (value) => {
+  if (!value) return '';
+  
+  // Remove tudo que não for dígito
+  const numericValue = value.replace(/\D/g, '');
+  
+  // Limita a 11 dígitos
+  const limitedValue = numericValue.slice(0, 11);
+  
+  // Aplica a máscara
+  if (limitedValue.length > 10) {
+    return limitedValue
+      .replace(/(\d{2})(\d)/, '($1) $2')
+      .replace(/(\d{5})(\d)/, '$1-$2')
+      .replace(/(\-\d{4})\d+?$/, '$1');
+  } else {
+    return limitedValue
+      .replace(/(\d{2})(\d)/, '($1) $2')
+      .replace(/(\d{4})(\d)/, '$1-$2')
+      .replace(/(\-\d{4})\d+?$/, '$1');
+  }
+};
+
+// Função para remover a formatação do CPF
+const unformatCPF = (value) => {
+  return value ? value.replace(/\D/g, '') : '';
+};
+
+// Função para remover a formatação do telefone
+const unformatPhone = (value) => {
+  return value ? value.replace(/\D/g, '') : '';
+};
 import empresaApiService from '../services/empresaApiService';
 import { clienteApiService } from '../services/clienteApiService';
 
@@ -17,6 +69,9 @@ const PageContainer = styled.div`
   padding: 2rem;
   max-width: 800px;
   margin: 0 auto;
+  background: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 `;
 
 const Header = styled.div`
@@ -24,21 +79,31 @@ const Header = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e9ecef;
   flex-wrap: wrap;
   gap: 1rem;
 `;
 
 const Title = styled.h1`
   font-size: 1.8rem;
-  color: #333;
+  color: #2c3e50;
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  
+  svg {
+    color: #4CAF50;
+  }
 `;
 
 const FormContainer = styled.div`
   background: white;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e9ecef;
   padding: 2rem;
+  margin-top: 1.5rem;
 `;
 
 const FormGroup = styled.div`
@@ -58,16 +123,33 @@ const FormGroup = styled.div`
 
   input, select {
     width: 100%;
-    padding: 0.75rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 1rem;
-    transition: border-color 0.2s;
+    padding: 0.75rem 1rem;
+    padding-left: ${props => props.hasIcon ? '2.5rem' : '1rem'};
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    background-color: ${props => props.disabled ? '#f8f9fa' : 'white'};
+    color: ${props => props.disabled ? '#6c757d' : '#212529'};
+    height: calc(1.5em + 1.5rem + 2px);
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: ${props => !props.hasIcon ? 'none' : 'none'};
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
 
     &:focus {
       outline: none;
       border-color: #4CAF50;
-      box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.25);
+      box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.15);
+    }
+    
+    &:disabled {
+      cursor: not-allowed;
+      background-color: #f8f9fa;
+      opacity: 1;
     }
   }
 `;
@@ -82,23 +164,33 @@ const FormRow = styled.div`
 const Button = styled.button`
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
+  padding: 0.75rem 1.75rem;
+  font-weight: 500;
   background-color: ${props => props.variant === 'secondary' ? '#6c757d' : '#4CAF50'};
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 120px;
   font-size: 1rem;
-  transition: background-color 0.2s;
   
   &:hover {
-    background-color: ${props => props.variant === 'secondary' ? '#5a6268' : '#45a049'};
+    background-color: ${props => props.variant === 'secondary' ? '#5a6268' : '#43a047'};
+    transform: translateY(-1px);
+  }
+  
+  &:active {
+    transform: translateY(0);
   }
   
   &:disabled {
     background-color: #cccccc;
+    opacity: 0.7;
     cursor: not-allowed;
+    transform: none;
   }
 `;
 
@@ -181,10 +273,15 @@ const EditarCliente = () => {
             : cliente.dataNascimento;
         }
         
-        setFormData({
+        // Garante que o CPF está formatado corretamente ao carregar os dados
+        const clienteFormatado = {
           ...cliente,
-          dataNascimento: dataFormatada
-        });
+          dataNascimento: dataFormatada,
+          cpf: cliente.cpf ? formatCPF(cliente.cpf) : ''
+        };
+        
+        console.log('Dados formatados do cliente:', clienteFormatado);
+        setFormData(clienteFormatado);
         
         setError('');
       } catch (err) {
@@ -200,10 +297,32 @@ const EditarCliente = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    // Aplica formatação baseada no campo
+    if (name === 'cpf') {
+      console.log('CPF antes da formatação:', value);
+      const formattedValue = formatCPF(value);
+      console.log('CPF após formatação:', formattedValue);
+      
+      setFormData(prev => ({
+        ...prev,
+        [name]: formattedValue
+      }));
+    } else if (name === 'telefone') {
+      console.log('Telefone antes da formatação:', value);
+      const formattedValue = formatPhone(value);
+      console.log('Telefone após formatação:', formattedValue);
+      
+      setFormData(prev => ({
+        ...prev,
+        [name]: formattedValue
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -215,13 +334,24 @@ const EditarCliente = () => {
       setIsSubmitting(true);
       setError('');
       
-      // Formatar dados - remover idCliente dos dados enviados
-      const { idCliente: _, ...dadosSemId } = formData;
-      const dadosParaEnviar = {
-        ...dadosSemId,
-        cpf: formData.cpf.replace(/\D/g, ''),
-        telefone: formData.telefone ? formData.telefone.replace(/\D/g, '') : null
-      };
+      // Remover idCliente e formatar campos antes de enviar
+      console.log('Dados do formulário antes de enviar:', formData);
+      
+      const { idCliente: _, ...dadosParaEnviar } = formData;
+      
+      // Garante que o CPF está no formato correto (apenas números)
+      if (dadosParaEnviar.cpf) {
+        console.log('CPF antes de remover formatação:', dadosParaEnviar.cpf);
+        dadosParaEnviar.cpf = unformatCPF(dadosParaEnviar.cpf);
+        console.log('CPF após remover formatação:', dadosParaEnviar.cpf);
+      }
+      
+      // Garante que o telefone está no formato correto (apenas números)
+      if (dadosParaEnviar.telefone) {
+        console.log('Telefone antes de remover formatação:', dadosParaEnviar.telefone);
+        dadosParaEnviar.telefone = unformatPhone(dadosParaEnviar.telefone);
+        console.log('Telefone após remover formatação:', dadosParaEnviar.telefone);
+      }
       
       console.log('🔄 Iniciando atualização do cliente...');
       console.log('📋 ID do cliente:', idCliente);
@@ -262,21 +392,29 @@ const EditarCliente = () => {
         <Button variant="secondary" onClick={() => navigate(-1)}>
           <FiArrowLeft /> Voltar
         </Button>
-        <Title>Editar Cliente</Title>
+        <Title>
+  <FiUser size={24} />
+  Editar Cliente
+</Title>
         <div></div> {/* Para alinhar o título ao centro */}
       </Header>
 
       <FormContainer>
-        {error && (
-          <ErrorMessage>
-            <FiAlertTriangle /> {error}
-          </ErrorMessage>
-        )}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <h3 style={{ color: '#2c3e50', marginBottom: '1rem', borderBottom: '1px solid #e9ecef', paddingBottom: '0.75rem' }}>
+            Informações do Cliente
+          </h3>
+          {error && (
+            <ErrorMessage>
+              <FiAlertTriangle /> {error}
+            </ErrorMessage>
+          )}
+        </div>
 
         <form onSubmit={handleSubmit}>
           <FormRow>
             <FormGroup>
-              <label>Nome <span className="required">*</span></label>
+              <label>Nome <span className="required"></span></label>
               <div style={{ position: 'relative' }}>
                 <FiUser style={{
                   position: 'absolute',
@@ -297,7 +435,7 @@ const EditarCliente = () => {
             </FormGroup>
 
             <FormGroup>
-              <label>CPF <span className="required">*</span></label>
+              <label>CPF <span className="required"></span></label>
               <input
                 type="text"
                 name="cpf"
@@ -331,19 +469,56 @@ const EditarCliente = () => {
             </FormGroup>
 
             <FormGroup>
+              <label>Telefone</label>
+              <div style={{ position: 'relative' }}>
+                <FiPhone style={{
+                  position: 'absolute',
+                  left: '10px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: '#6c757d'
+                }} />
+                <input
+                  type="tel"
+                  name="telefone"
+                  value={formData.telefone || ''}
+                  onChange={handleChange}
+                  placeholder="(00) 00000-0000"
+                  style={{ paddingLeft: '35px' }}
+                />
+              </div>
+            </FormGroup>
+          </FormRow>
+
+          <FormRow>
+            <FormGroup hasIcon>
               <label>Empresa</label>
-              <select
-                name="idEmpresa"
-                value={formData.idEmpresa || ''}
-                onChange={handleChange}
-              >
-                <option value="">Selecione uma empresa</option>
-                {empresas.map(empresa => (
-                  <option key={empresa.id} value={empresa.id}>
-                    {empresa.nomeFantasia || empresa.razaoSocial}
-                  </option>
-                ))}
-              </select>
+              <div style={{ position: 'relative', width: '100%' }}>
+                <FiBriefcase style={{
+                  position: 'absolute',
+                  left: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: '#6c757d',
+                  zIndex: 1
+                }} />
+                <select
+                  name="idEmpresa"
+                  value={formData.idEmpresa || ''}
+                  onChange={handleChange}
+                  disabled
+                >
+                  <option value="">Selecione uma empresa</option>
+                  {empresas.map(empresa => (
+                    <option key={empresa.id} value={empresa.id}>
+                      {empresa.nomeFantasia || empresa.razaoSocial}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <small className="text-muted" style={{ display: 'block', marginTop: '0.5rem', color: '#6c757d' }}>
+                A empresa não pode ser alterada após o cadastro
+              </small>
             </FormGroup>
           </FormRow>
 
@@ -405,19 +580,22 @@ const EditarCliente = () => {
             </FormGroup>
           </FormRow>
 
-          <ButtonGroup>
-            <Button
-              type="button"
-              variant="secondary"
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid #e9ecef' }}>
+            <Button 
+              type="button" 
+              variant="secondary" 
               onClick={() => navigate(-1)}
               disabled={isSubmitting}
             >
-              Cancelar
+              <FiArrowLeft /> Voltar
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+            >
               <FiSave /> {isSubmitting ? 'Salvando...' : 'Salvar Alterações'}
             </Button>
-          </ButtonGroup>
+          </div>
         </form>
       </FormContainer>
     </PageContainer>

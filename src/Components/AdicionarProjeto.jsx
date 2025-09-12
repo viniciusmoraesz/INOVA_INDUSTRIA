@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
+import { FiDollarSign, FiCalendar, FiUser, FiBriefcase, FiAlertCircle, FiInfo } from 'react-icons/fi';
 import {
   PageContainer,
   Title,
@@ -34,6 +35,19 @@ import empresaApiService from '../services/empresaApiService';
 import { clienteApiService } from '../services/clienteApiService';
 import projetoApiService from '../services/projetoApiService';
 
+// Função para validar data entre hoje e 2040
+const isValidDateRange = (dateString) => {
+  if (!dateString) return true;
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const maxDate = new Date('2040-01-01');
+  const inputDate = new Date(dateString);
+  
+  return inputDate >= today && inputDate < maxDate;
+};
+
 // Schema de validação com Yup
 const schema = yup.object({
   nome: yup.string()
@@ -41,13 +55,8 @@ const schema = yup.object({
     .max(100, 'O nome não pode ter mais de 100 caracteres'),
   descricao: yup.string(),
   dataInicio: yup.string()
-    .required('A data de início é obrigatória'),
-  dataFimPrevista: yup.string()
-    .nullable(),
-  orcamento: yup.number()
-    .typeError('O orçamento deve ser um número')
-    .positive('O orçamento deve ser um valor positivo')
-    .nullable(),
+    .required('A data de início é obrigatória')
+    .test('data-valida', 'A data deve estar entre hoje e 31/12/2039', isValidDateRange),
   status: yup.string()
     .required('O status é obrigatório')
     .oneOf(['PLANEJAMENTO', 'EM_ANDAMENTO', 'PAUSADO', 'CONCLUIDO', 'CANCELADO'], 'Status inválido'),
@@ -61,6 +70,23 @@ const schema = yup.object({
   responsavelId: yup.string()
     .nullable()
 });
+
+// Função para formatar valor monetário
+const formatCurrency = (value) => {
+  if (!value) return '';
+  
+  // Remove tudo que não for dígito
+  const numericValue = value.replace(/\D/g, '');
+  // Converte para número e divide por 100 para obter os centavos
+  const number = parseFloat(numericValue) / 100;
+  
+  // Formata como moeda brasileira
+  return number.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 2
+  });
+};
 
 const statusOptions = [
   { value: 'PLANEJAMENTO', label: 'Planejamento' },
@@ -102,13 +128,51 @@ export default function AdicionarProjeto() {
     navigate('/projetos');
   };
 
-  const { register, handleSubmit, watch, formState: { errors }, reset, setValue } = useForm({
+  const { register, handleSubmit, watch, formState: { errors }, reset, setValue, getValues, setFocus, trigger } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
       status: 'PLANEJAMENTO',
-      prioridade: 'MEDIA'
+      prioridade: 'MEDIA',
+      orcamento: '',
+      dataInicio: '',
+      dataFimPrevista: ''
     }
   });
+
+  // Watch dates for validation
+  const dataInicio = watch('dataInicio');
+  const dataFimPrevista = watch('dataFimPrevista');
+
+  // Validate end date when start date changes and vice versa
+  useEffect(() => {
+    if (dataInicio && dataFimPrevista) {
+      const start = new Date(dataInicio);
+      const end = new Date(dataFimPrevista);
+      
+      if (start > end) {
+        setValue('dataFimPrevista', '');
+      }
+      trigger('dataFimPrevista');
+    }
+  }, [dataInicio, dataFimPrevista, setValue, trigger]);
+
+  // Função para manipular mudanças nos campos
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    
+    // Formatação específica para o campo de orçamento
+    if (name === 'orcamento') {
+      // Remove todos os caracteres não numéricos
+      const onlyNums = value.replace(/\D/g, '');
+      // Converte para número e formata como moeda
+      const formattedValue = formatCurrency(onlyNums);
+      setValue('orcamento', formattedValue, { shouldValidate: true });
+      return;
+    }
+
+    // Para outros campos, apenas atualiza o valor
+    setValue(name, value, { shouldValidate: true });
+  };
 
   // Watch para empresaId para filtrar clientes
   const empresaSelecionada = watch('empresaId');
@@ -150,8 +214,7 @@ export default function AdicionarProjeto() {
           const todosClientes = await clienteApiService.listarClientes();
           console.log('Todos os clientes carregados:', todosClientes);
           
-          // Depois, carregar apenas os clientes da empresa selecionada
-          // Nota: Se listarClientesPorEmpresa não existir, podemos filtrar localmente
+          // Filtrar clientes da empresa selecionada
           const clientesEmpresa = todosClientes.filter(cliente => 
             String(cliente.idEmpresa) === String(empresaSelecionada)
           );
@@ -183,15 +246,27 @@ export default function AdicionarProjeto() {
     carregarClientesPorEmpresa();
   }, [empresaSelecionada, setValue]);
 
-  const onSubmit = async (data) => {
-    console.log('🚀 onSubmit chamado com dados:', data);
-    try {
-      console.log('Dados do formulário submetidos:', data);
-      setIsSubmitting(true);
-      setSubmitStatus(null);
-      setFormError('');
+  // Função para converter valor formatado (R$ 1.234,56) para número (1234.56)
+  const parseCurrency = (value) => {
+    if (!value) return null;
+    // Remove R$, pontos e espaços, troca vírgula por ponto
+    const numericValue = value
+      .replace(/[^\d,]/g, '')
+      .replace(',', '.');
+    return parseFloat(numericValue) || null;
+  };
 
-      // Validação adicional
+  const onSubmit = async (data) => {
+    console.log('📝 Form data:', data);
+    
+    if (isSubmitting) return;
+    
+    try {
+      setIsSubmitting(true);
+      setFormError('');
+      setSubmitStatus(null);
+
+      // Validação adicional para garantir que o nome não esteja vazio
       if (!data.nome || data.nome.trim() === '') {
         console.error('❌ Campo nome está vazio:', data.nome);
         setFormError('Nome do projeto é obrigatório');
@@ -199,26 +274,32 @@ export default function AdicionarProjeto() {
         return;
       }
 
+      // Validação de datas
+      const dataInicio = data.dataInicio ? new Date(data.dataInicio) : null;
+      const dataFim = data.dataFimPrevista ? new Date(data.dataFimPrevista) : null;
+      
+      if (dataInicio && dataFim && dataInicio > dataFim) {
+        setFormError('A data de término deve ser posterior à data de início');
+        setIsSubmitting(false);
+        return;
+      }
+
       // Formatar os dados para o formato esperado pelo serviço
       const projetoData = {
-        titulo: data.nome.trim(), // Frontend usa 'nome', backend espera 'titulo'
+        titulo: data.nome.trim(),
         descricao: data.descricao,
-        dataInicio: data.dataInicio && isValidDate(data.dataInicio) ? data.dataInicio : null,
-        dataTerminoPrevista: data.dataFimPrevista && data.dataFimPrevista.trim() !== '' && isValidDate(data.dataFimPrevista) ? data.dataFimPrevista : null,
-        orcamento: data.orcamento ? parseFloat(data.orcamento) : null,
-        status: data.status, // Já está no formato correto do enum
-        prioridade: data.prioridade, // Já está no formato correto do enum
+        dataInicio: dataInicio ? dataInicio.toISOString().split('T')[0] : null,
+        dataTerminoPrevista: dataFim ? dataFim.toISOString().split('T')[0] : null,
+        orcamento: parseCurrency(data.orcamento),
+        status: data.status,
+        prioridade: data.prioridade,
         idEmpresa: parseInt(data.empresaId),
-        idGerente: data.clienteId ? parseInt(data.clienteId) : null // Mapear cliente como gerente por enquanto
+        idGerente: data.clienteId ? parseInt(data.clienteId) : null
       };
 
-      console.log('📋 Dados do formulário original:', data);
       console.log('📋 Dados formatados para envio:', projetoData);
-      console.log('🔍 Cliente ID enviado:', data.clienteId, 'Tipo:', typeof data.clienteId);
-      console.log('🔍 ID Gerente final:', projetoData.idGerente, 'Tipo:', typeof projetoData.idGerente);
-      console.log('🔍 Testando conectividade com o backend...');
-      
-      // Primeiro, testar se o backend está acessível
+
+      // Verificar se o backend está acessível
       try {
         const testResponse = await fetch('http://localhost:8080/auth/login', {
           method: 'OPTIONS'
@@ -318,40 +399,59 @@ export default function AdicionarProjeto() {
         </FormGroup>
 
         <GridContainer>
-          <FormGroup>
-            <DateRangeLabel>Data de Início <RequiredLabel>*</RequiredLabel></DateRangeLabel>
-            <DateRangeInput
-              type="date"
-              {...register('dataInicio')}
-              disabled={isSubmitting}
-            />
-            {errors.dataInicio && <DateRangeError>{errors.dataInicio.message}</DateRangeError>}
+          <FormGroup style={{ marginTop: '1.5rem' }}>
+            <Label>Data de Início <RequiredLabel>*</RequiredLabel></Label>
+            <div style={{ position: 'relative' }}>
+              <FiCalendar style={{
+                position: 'absolute',
+                left: '12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: '#6c757d',
+                zIndex: 1
+              }} />
+              <DateRangeInput
+                type="date"
+                {...register('dataInicio')}
+                disabled={isSubmitting}
+                min={new Date().toISOString().split('T')[0]}
+                max="2039-12-31"
+                style={{
+                  paddingLeft: '2.5rem',
+                  backgroundColor: isSubmitting ? '#f8f9fa' : 'white',
+                  opacity: isSubmitting ? 0.8 : 1,
+                  cursor: isSubmitting ? 'not-allowed' : 'pointer'
+                }}
+              />
+            </div>
+            {errors.dataInicio && (
+              <DateRangeError>
+                <FiAlertCircle style={{ marginRight: '4px' }} />
+                {errors.dataInicio.message}
+              </DateRangeError>
+            )}
           </FormGroup>
 
-          <FormGroup>
-            <DateRangeLabel>Data de Término Prevista</DateRangeLabel>
-            <DateRangeInput
-              type="date"
-              {...register('dataFimPrevista')}
-              disabled={isSubmitting}
-            />
-            {errors.dataFimPrevista && <DateRangeError>{errors.dataFimPrevista.message}</DateRangeError>}
+          <FormGroup style={{ marginTop: '1.5rem' }}>
+            <Label>Empresa <RequiredLabel>*</RequiredLabel></Label>
+            <StatusSelect
+              {...register('empresaId')}
+              disabled={isSubmitting || empresas.length === 0}
+            >
+              <option value="">Selecione uma empresa</option>
+              {empresas.map((empresa) => (
+                <option key={empresa.id} value={empresa.id}>
+                  {empresa.nomeFantasia.length > 20 
+                    ? `${empresa.nomeFantasia.substring(0, 20)}...` 
+                    : empresa.nomeFantasia}
+                </option>
+              ))}
+            </StatusSelect>
+            {errors.empresaId && <ErrorMessage>{errors.empresaId.message}</ErrorMessage>}
           </FormGroup>
         </GridContainer>
 
         <GridContainer>
-          <FormGroup>
-            <Label>Orçamento (R$)</Label>
-            <FullWidthInput
-              type="number"
-              step="0.01"
-              min="0"
-              {...register('orcamento')}
-              disabled={isSubmitting}
-            />
-            {errors.orcamento && <ErrorMessage>{errors.orcamento.message}</ErrorMessage>}
-          </FormGroup>
-
           <FormGroup>
             <Label>Prioridade <RequiredLabel>*</RequiredLabel></Label>
             <StatusSelect
@@ -366,24 +466,6 @@ export default function AdicionarProjeto() {
             </StatusSelect>
             {errors.prioridade && <ErrorMessage>{errors.prioridade.message}</ErrorMessage>}
           </FormGroup>
-        </GridContainer>
-
-        <GridContainer>
-          <FormGroup>
-            <Label>Empresa <RequiredLabel>*</RequiredLabel></Label>
-            <StatusSelect
-              {...register('empresaId')}
-              disabled={isSubmitting || empresas.length === 0}
-            >
-              <option value="">Selecione uma empresa</option>
-              {empresas.map((empresa) => (
-                <option key={empresa.id} value={empresa.id}>
-                  {empresa.nomeFantasia} - {empresa.razaoSocial}
-                </option>
-              ))}
-            </StatusSelect>
-            {errors.empresaId && <ErrorMessage>{errors.empresaId.message}</ErrorMessage>}
-          </FormGroup>
 
           <FormGroup>
             <Label>Cliente <RequiredLabel>*</RequiredLabel></Label>
@@ -396,7 +478,7 @@ export default function AdicionarProjeto() {
               </option>
               {clientesFiltrados.map((cliente) => (
                 <option key={cliente.idCliente} value={cliente.idCliente}>
-                  {cliente.nome} - {cliente.email}
+                  {cliente.nome.length > 20 ? `${cliente.nome.substring(0, 20)}...` : cliente.nome}
                 </option>
               ))}
             </StatusSelect>

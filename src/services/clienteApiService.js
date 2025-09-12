@@ -2,18 +2,38 @@ const API_BASE_URL = 'http://localhost:8080';
 
 // Função para obter headers de autorização
 const getAuthHeaders = () => {
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const headers = {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-    'Origin': 'http://localhost:5173'
-  };
-  
-  if (user.token) {
-    headers['Authorization'] = `Bearer ${user.token}`;
+  try {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) {
+      return {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Origin': 'http://localhost:5173'
+      };
+    }
+    
+    const user = JSON.parse(userStr);
+    const token = user.token || (user.data && user.data.token);
+    
+    const headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Origin': 'http://localhost:5173'
+    };
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    return headers;
+  } catch (error) {
+    console.error('Error getting auth headers:', error);
+    return {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Origin': 'http://localhost:5173'
+    };
   }
-  
-  return headers;
 };
 
 // Configuração padrão para todas as requisições
@@ -96,8 +116,8 @@ const formatClienteData = (data) => {
     idEmpresa: data.idEmpresa,
     nome: data.nome,
     email: data.email,
-    telefone: data.telefone ? data.telefone.replace(/\D/g, '') : null,
-    cpf: data.cpf ? data.cpf.replace(/\D/g, '') : null,
+    telefone: data.telefone, // Já formatado no componente
+    cpf: data.cpf, // Já formatado no componente
     dataNascimento: data.dataNascimento,
     cargo: data.cargo,
     departamento: data.departamento,

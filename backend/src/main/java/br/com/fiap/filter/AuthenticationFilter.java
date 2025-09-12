@@ -12,6 +12,7 @@ import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
 import jakarta.ws.rs.ext.Provider;
+import br.com.fiap.config.EnvConfig;
 
 import java.io.IOException;
 import java.security.Principal;
@@ -21,10 +22,11 @@ import java.security.Principal;
 @Priority(Priorities.AUTHENTICATION)
 public class AuthenticationFilter implements ContainerRequestFilter {
 
-    // NOTE: This must be the same secret key as in TokenService.java
-    private static final String SECRET_KEY = "your_super_secret_key_that_is_long_and_secure";
-    private static final String REALM = "example";
+    // Using the same secret key as in TokenService.java
+    private static final String SECRET_KEY = EnvConfig.getJwtSecret();
+    private static final String REALM = "inova-industria";
     private static final String AUTHENTICATION_SCHEME = "Bearer";
+    private final Algorithm algorithm = Algorithm.HMAC256(SECRET_KEY);
 
     @Override
     public void filter(ContainerRequestContext requestContext) throws IOException {
@@ -62,24 +64,23 @@ public class AuthenticationFilter implements ContainerRequestFilter {
         try {
             DecodedJWT decodedJWT = validateToken(token);
 
-            // Set the security context for the request
-            final SecurityContext currentSecurityContext = requestContext.getSecurityContext();
+            // Set the security context with the authenticated user
+            final String subject = decodedJWT.getSubject();
             requestContext.setSecurityContext(new SecurityContext() {
                 @Override
                 public Principal getUserPrincipal() {
-                    // The user's ID is the subject of the token
-                    return () -> decodedJWT.getSubject();
+                    return () -> subject;
                 }
 
                 @Override
                 public boolean isUserInRole(String role) {
-                    // Check if the user has the specified role
-                    return decodedJWT.getClaim("role").asString().equals(role);
+                    // You can implement role-based access control here if needed
+                    return true;
                 }
 
                 @Override
                 public boolean isSecure() {
-                    return currentSecurityContext.isSecure();
+                    return requestContext.getSecurityContext().isSecure();
                 }
 
                 @Override
@@ -108,9 +109,8 @@ public class AuthenticationFilter implements ContainerRequestFilter {
     }
 
     private DecodedJWT validateToken(String token) throws Exception {
-        Algorithm algorithm = Algorithm.HMAC256(SECRET_KEY);
         JWTVerifier verifier = JWT.require(algorithm)
-                .withIssuer("inova-industria-api")
+                .withIssuer("inova-industria-api")  // Mesmo emissor usado no TokenService
                 .build();
         return verifier.verify(token);
     }
