@@ -32,10 +32,10 @@ public class Main {
 
         try {
             // 1. Rodar migrations antes de subir o servidor
-            runMigrations();
+            // runMigrations(); // Migrações já aplicadas manualmente
 
             // 2. Iniciar servidor
-            startServer();
+            HttpServer server = startServer();
             LOGGER.info(String.format("Jersey app started with WADL available at %sapplication.wadl", BASE_URI));
             LOGGER.info("Hit Ctrl-C to stop it...");
 
@@ -106,4 +106,3 @@ public class Main {
         }
     }
 }
-

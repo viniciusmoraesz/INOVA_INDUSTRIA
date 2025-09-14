@@ -83,7 +83,7 @@ const CadastrarCliente = () => {
     const loadEmpresas = async () => {
       try {
         const response = await empresaApiService.listarEmpresas();
-        setEmpresas(response.data || []);
+        setEmpresas(response || []);
       } catch (err) {
         console.error('Erro ao carregar empresas:', err);
         setError('Erro ao carregar a lista de empresas. Tente novamente mais tarde.');
@@ -118,7 +118,7 @@ const CadastrarCliente = () => {
           });
         } catch (err) {
           console.error('Erro ao carregar cliente:', err);
-          setError('Erro ao carregar os dados do cliente. Tente novamente mais tarde.');
+          setError('Erro ao carregar os dados do cliente. Tente novamente.');
         }
       };
       
@@ -388,7 +388,7 @@ const CadastrarCliente = () => {
             >
               <option value="">Selecione uma empresa</option>
               {empresas.map((empresa) => (
-                <option key={empresa.id} value={empresa.id}>
+                <option key={empresa.id} value={empresa.id.toString()}>
                   {empresa.nomeFantasia || empresa.razaoSocial}
                 </option>
               ))}
