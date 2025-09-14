@@ -1,6 +1,7 @@
 package br.com.fiap;
 
 import br.com.fiap.config.CORSFilter;
+import br.com.fiap.config.EnvConfig;
 import br.com.fiap.filter.AuthenticationFilter;
 import br.com.fiap.resource.AuthResource;
 import br.com.fiap.resource.ClienteResource;
@@ -9,6 +10,7 @@ import br.com.fiap.resource.ProjetoResource;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
+import org.flywaydb.core.Flyway;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -21,13 +23,23 @@ public class Main {
     private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
     public static final String BASE_URI = "http://localhost:8080/";
 
+    
+
     public static void main(String[] args) {
+
+        String senha = EnvConfig.getDatabasePassword();
+        System.out.println("Senha lida: " + senha.replaceAll(".", "*"));
+
         try {
+            // 1. Rodar migrations antes de subir o servidor
+            runMigrations();
+
+            // 2. Iniciar servidor
             startServer();
             LOGGER.info(String.format("Jersey app started with WADL available at %sapplication.wadl", BASE_URI));
             LOGGER.info("Hit Ctrl-C to stop it...");
 
-            // Keep the main thread alive
+            // Mantém a thread principal viva
             Thread.currentThread().join();
 
         } catch (InterruptedException e) {
@@ -38,20 +50,36 @@ public class Main {
         }
     }
 
+    private static void runMigrations() {
+        try {
+            Flyway flyway = Flyway.configure()
+                    .dataSource(
+                            "jdbc:postgresql://localhost:5432/inova_industria", // URL do banco
+                            "postgres",  // usuário
+                            "senha"      // senha
+                    )
+                    .load();
+
+            flyway.migrate();
+            LOGGER.info("Migrations aplicadas com sucesso!");
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Erro ao aplicar migrations com Flyway", e);
+            throw new RuntimeException("Falha ao aplicar migrations", e);
+        }
+    }
+
     public static HttpServer startServer() {
         try {
-            // Configure Jackson ObjectMapper with JSR310 support
+            // Configura Jackson ObjectMapper com suporte a datas Java 8+
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.registerModule(new JavaTimeModule());
             objectMapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-            
-            // Create Jackson JSON provider with configured ObjectMapper
+
             JacksonJsonProvider jacksonProvider = new JacksonJsonProvider();
             jacksonProvider.setMapper(objectMapper);
 
-            // Create a resource config that scans for JAX-RS resources and providers
+            // Configuração de recursos e filtros
             final ResourceConfig rc = new ResourceConfig()
-                    // Add the filter package to be scanned
                     .packages("br.com.fiap.resource", "br.com.fiap.filter")
                     .register(jacksonProvider)
                     .register(CORSFilter.class)
@@ -59,16 +87,12 @@ public class Main {
                     .register(ClienteResource.class)
                     .register(EmpresaResource.class)
                     .register(ProjetoResource.class)
-                    // Register the AuthenticationFilter
                     .register(AuthenticationFilter.class);
 
-            // Log all registered resources
             LOGGER.info("Registered resources: " + rc.getClasses());
 
-            // Create and start a new instance of grizzly http server
             HttpServer server = GrizzlyHttpServerFactory.createHttpServer(URI.create(BASE_URI), rc);
 
-            // Add shutdown hook
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 LOGGER.info("Shutting down server...");
                 server.shutdownNow();
@@ -82,3 +106,4 @@ public class Main {
         }
     }
 }
+

@@ -507,7 +507,7 @@ const CadastrarEmpresa = () => {
                     </SearchButton>
                   )}
                 </InputGroup>
-                {errors.cnpj && <ErrorText>{errors.cnpj}</ErrorText>}
+                {errors.cnpj && <ErrorMessage>{errors.cnpj}</ErrorMessage>}
                 {!id && (
                   <HelperText>
                     <FiInfo /> Digite o CNPJ e clique em buscar para preencher os dados automaticamente

@@ -145,6 +145,14 @@
             <artifactId>argon2-jvm</artifactId>
             <version>2.11</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+            <version>9.22.3</version> <!-- Verifique a versão mais recente -->
+        </dependency>
+
+        
     </dependencies>
 
     <build>
