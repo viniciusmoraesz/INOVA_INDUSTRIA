@@ -77,6 +77,22 @@ export const formatInscricaoEstadual = (value) => {
     .replace(/(\.\d{3})(\d)/, '$1.$2');
 };
 
+// Formatar CPF: 000.000.000-00
+export const formatCPF = (value = '') => {
+  // Remove tudo que não for dígito
+  const numbers = value.replace(/\D/g, '');
+  
+  // Limita a 11 dígitos
+  const limited = numbers.slice(0, 11);
+  
+  // Aplica a máscara
+  return limited
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d{1,2})/, '$1-$2')
+    .replace(/(\-\d{2})\d+?$/, '$1');
+};
+
 // Formata Inscrição Municipal (formato genérico: 0.000.000-0)
 export const formatInscricaoMunicipal = (value) => {
   if (!value) return '';

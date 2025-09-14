@@ -111,6 +111,91 @@ export const validateName = (name) => {
   return !/[<>{}[\]~`]/.test(name); // Apena bloqueia caracteres que poderiam causar problemas de segurança
 };
 
+// Validação de CPF
+export const validateCPF = (cpf) => {
+  if (!cpf) return false;
+  
+  // Remove todos os caracteres não numéricos
+  const cleanCpf = cpf.replace(/[^\d]/g, '');
+  
+  // Verifica o tamanho
+  if (cleanCpf.length !== 11) return false;
+  
+  // Verifica se todos os dígitos são iguais (CPF inválido)
+  if (/^(\d)\1+$/.test(cleanCpf)) return false;
+  
+  // Validação dos dígitos verificadores
+  let sum = 0;
+  let remainder;
+  
+  // Cálculo do primeiro dígito verificador
+  for (let i = 1; i <= 9; i++) {
+    sum += parseInt(cleanCpf.substring(i - 1, i)) * (11 - i);
+  }
+  
+  remainder = (sum * 10) % 11;
+  if (remainder === 10 || remainder === 11) remainder = 0;
+  if (remainder !== parseInt(cleanCpf.substring(9, 10))) return false;
+  
+  // Cálculo do segundo dígito verificador
+  sum = 0;
+  for (let i = 1; i <= 10; i++) {
+    sum += parseInt(cleanCpf.substring(i - 1, i)) * (12 - i);
+  }
+  
+  remainder = (sum * 10) % 11;
+  if (remainder === 10 || remainder === 11) remainder = 0;
+  if (remainder !== parseInt(cleanCpf.substring(10, 11))) return false;
+  
+  return true;
+};
+
+// Validação de data de nascimento
+export const validateBirthDate = (date) => {
+  if (!date) return true; // Campo opcional
+  
+  const birthDate = new Date(date);
+  const today = new Date();
+  const minAge = 16; // Idade mínima
+  const maxAge = 120; // Idade máxima razoável
+  
+  // Verifica se a data é válida
+  if (isNaN(birthDate.getTime())) return false;
+  
+  // Verifica se o ano está dentro de um range razoável
+  const year = birthDate.getFullYear();
+  if (year < 1900 || year > 2030) return false;
+  
+  // Verifica se não é uma data futura
+  if (birthDate > today) return false;
+  
+  // Calcula a idade
+  const age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  const dayDiff = today.getDate() - birthDate.getDate();
+  
+  let actualAge = age;
+  if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+    actualAge--;
+  }
+  
+  // Verifica se a idade está dentro do range aceitável
+  return actualAge >= minAge && actualAge <= maxAge;
+};
+
+// Validação de senha
+export const validatePassword = (password, isRequired = true) => {
+  if (!isRequired && !password) return true;
+  if (isRequired && !password) return false;
+  
+  // Mínimo 6 caracteres, pelo menos uma letra e um número
+  const hasMinLength = password.length >= 6;
+  const hasLetter = /[a-zA-Z]/.test(password);
+  const hasNumber = /\d/.test(password);
+  
+  return hasMinLength && hasLetter && hasNumber;
+};
+
 // Validação de campos obrigatórios
 export const validateRequired = (value) => {
   return value !== null && value !== undefined && value.toString().trim() !== '';

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { showToast } from './Toast';
 import { 
   FiArrowLeft, 
   FiPlus, 
@@ -13,7 +14,8 @@ import {
   FiMail,
   FiPhone,
   FiBriefcase,
-  FiHome
+  FiHome,
+  FiX
 } from 'react-icons/fi';
 import { clienteApiService } from '../services/clienteApiService';
 import empresaApiService from '../services/empresaApiService';
@@ -138,28 +140,125 @@ const InfoText = styled.span`
 `;
 
 const RoleBadge = styled.span`
-  display: inline-flex;
-  align-items: center;
-  padding: 0.25rem 0.75rem;
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   background-color: ${props => {
     switch(props.role) {
-      case 'SUPER_ADMIN': return '#e8f5e8';
-      case 'ADMIN': return '#fff3e0';
-      case 'CLIENTE': return '#f3e5f5';
-      default: return '#f5f5f5';
+      case 'ADMIN': return '#4f46e5';
+      case 'GESTOR': return '#10b981';
+      case 'COLABORADOR': return '#3b82f6';
+      case 'CLIENTE': return '#8b5cf6';
+      default: return '#6b7280';
     }
   }};
-  color: ${props => {
-    switch(props.role) {
-      case 'SUPER_ADMIN': return '#2e7d32';
-      case 'ADMIN': return '#f57c00';
-      case 'CLIENTE': return '#7b1fa2';
-      default: return '#666';
-    }
-  }};
-  border-radius: 12px;
-  font-size: 0.8rem;
+  color: white;
+`;
+
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
+
+const ModalContent = styled.div`
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+`;
+
+const ModalTitle = styled.h3`
+  margin: 0 0 1rem 0;
+  color: #111827;
+  font-size: 1.25rem;
   font-weight: 500;
+  text-align: left;
+`;
+
+const ModalMessage = styled.div`
+  color: #4b5563;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+  text-align: left;
+  font-size: 1rem;
+  
+  .client-name {
+    font-weight: 600;
+    color: #111827;
+    margin: 0.5rem 0 1rem;
+    padding: 0.5rem;
+    background: #f8fafc;
+    border-left: 3px solid #ef4444;
+  }
+`;
+
+const ModalActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+`;
+
+const ModalButton = styled.button`
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  outline: none;
+  min-width: 100px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  
+  &.cancel {
+    background-color: #f3f4f6;
+    color: #4b5563;
+    border: 1px solid #e5e7eb;
+    
+    &:hover {
+      background-color: #e5e7eb;
+      transform: translateY(-1px);
+    }
+    
+    &:active {
+      transform: translateY(0);
+    }
+  }
+  
+  &.confirm {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2);
+    
+    &:hover {
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px rgba(220, 38, 38, 0.3);
+    }
+    
+    &:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2);
+    }
+  }
 `;
 
 const Button = styled.button`
@@ -338,6 +437,8 @@ const formatPhone = (phone) => {
 };
 
 const ListaClientes = () => {
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [clienteToDelete, setClienteToDelete] = useState(null);
   const navigate = useNavigate();
   const [clientes, setClientes] = useState([]);
   const [empresas, setEmpresas] = useState([]);
@@ -358,7 +459,12 @@ const ListaClientes = () => {
           empresaApiService.listarEmpresas()
         ]);
         
-        console.log('Dados recebidos:', { clientes: clientesData, empresas: empresasData });
+        console.log('Dados recebidos - Estrutura completa:', { 
+          clientes: clientesData, 
+          empresas: empresasData,
+          'primeiroCliente': clientesData[0],
+          'camposDoPrimeiroCliente': clientesData[0] ? Object.keys(clientesData[0]) : 'Nenhum cliente encontrado'
+        });
         
         setClientes(clientesData || []);
         setEmpresas(empresasData || []);
@@ -379,24 +485,45 @@ const ListaClientes = () => {
     setCurrentPage(1);
   };
 
-  const handleDelete = async (id) => {
-    const cliente = clientes.find(c => c.id === id);
-    const clienteNome = cliente ? cliente.nome : 'este cliente';
-    
-    const confirmMessage = `ATENÇÃO: Esta ação é irreversível!\n\n` +
-                         `Tem certeza que deseja excluir permanentemente "${clienteNome}"?\n\n` +
-                         `Esta ação não poderá ser desfeita.`;
-
-    if (window.confirm(confirmMessage)) {
-      try {
-        await clienteApiService.excluirCliente(id);
-        setClientes(clientes.filter(cliente => cliente.id !== id));
-        alert('Cliente excluído com sucesso!');
-      } catch (error) {
-        console.error('Erro ao excluir cliente:', error);
-        alert('Erro ao excluir cliente. Por favor, tente novamente.');
-      }
+  const handleDeleteClick = (id) => {
+    console.log('Procurando cliente com ID:', id);
+    console.log('Lista de clientes disponível:', clientes);
+    const cliente = clientes.find(c => c.id === id || c.ID === id || c.idCliente === id);
+    console.log('Cliente encontrado:', cliente);
+    if (!cliente) {
+      console.error('Cliente não encontrado para o ID:', id);
+      return;
     }
+    setClienteToDelete({ 
+      id, 
+      nome: cliente.nome || cliente.NOME || 'Cliente sem nome' 
+    });
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!clienteToDelete) return;
+    
+    try {
+      await clienteApiService.excluirCliente(clienteToDelete.id);
+      setClientes(clientes.filter(cliente => 
+        cliente.id !== clienteToDelete.id && 
+        cliente.ID !== clienteToDelete.id &&
+        cliente.idCliente !== clienteToDelete.id
+      ));
+      showToast('Cliente excluído com sucesso!', 'success');
+    } catch (error) {
+      console.error('Erro ao excluir cliente:', error);
+      showToast('Erro ao excluir cliente. Por favor, tente novamente.', 'error');
+    } finally {
+      setShowDeleteModal(false);
+      setClienteToDelete(null);
+    }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setClienteToDelete(null);
   };
 
   // Filter clients based on search term
@@ -530,7 +657,7 @@ const ListaClientes = () => {
                     </ActionButton>
                     <ActionButton 
                       className="delete"
-                      onClick={() => handleDelete(clienteId)}
+                      onClick={() => handleDeleteClick(clienteId)}
                       title="Excluir cliente"
                     >
                       <FiTrash2 size={14} />
@@ -610,6 +737,40 @@ const ListaClientes = () => {
           </button>
         </div>
       </Pagination>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && clienteToDelete && (
+        <ModalOverlay onClick={cancelDelete}>
+          <ModalContent onClick={e => e.stopPropagation()}>
+            <ModalTitle>Confirmar exclusão</ModalTitle>
+            <ModalMessage>
+              <p>Tem certeza que deseja excluir este cliente?</p>
+              <div className="client-name">
+                {clienteToDelete.nome || 'Cliente sem nome'}
+              </div>
+              <p style={{ color: '#dc2626', fontSize: '0.9rem' }}>
+                Esta ação não poderá ser desfeita.
+              </p>
+            </ModalMessage>
+            <ModalActions>
+              <ModalButton 
+                className="cancel"
+                onClick={cancelDelete}
+              >
+                <FiX size={18} />
+                Cancelar
+              </ModalButton>
+              <ModalButton 
+                className="confirm"
+                onClick={confirmDelete}
+              >
+                <FiTrash2 size={16} />
+                Excluir
+              </ModalButton>
+            </ModalActions>
+          </ModalContent>
+        </ModalOverlay>
+      )}
     </Container>
   );
 };

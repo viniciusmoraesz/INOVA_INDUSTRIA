@@ -19,9 +19,11 @@ public class EmpresaResource {
 
     @GET
     public Response listarEmpresas() {
+        System.out.println("Endpoint /api/empresas acessado"); // Log temporário
         try (EmpresaDAO dao = new EmpresaDAO()) {
             // Temporarily return all companies for testing (without authentication)
             List<Empresa> empresas = dao.listarTodos();
+            System.out.println("Número de empresas encontradas: " + empresas.size()); // Log temporário
             return Response.ok(empresas).build();
         } catch (Exception e) {
             e.printStackTrace();

@@ -1,17 +1,22 @@
-import styled from "styled-components";
+import styled, { keyframes } from 'styled-components';
+
+const fadeIn = keyframes`
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
 
 export const PageContainer = styled.div`
-  padding: 2.5rem;
-  max-width: 900px;
+  padding: 2.5rem 3.5rem;
+  max-width: 1000px;
   margin: 30px auto;
   background: linear-gradient(145deg, #ffffff 0%, #f8f9ff 100%);
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
   width: 90%;
   box-sizing: border-box;
-  overflow: hidden;
   border: 1px solid rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
+  animation: ${fadeIn} 0.3s ease-out;
 
   @media (max-width: 768px) {
     padding: 1.5rem;
@@ -19,35 +24,70 @@ export const PageContainer = styled.div`
     margin: 20px auto;
     border-radius: 12px;
   }
+`;
+
+export const Header = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+`;
+
+export const BackButton = styled.button`
+  background: #fff;
+  color: #4a5568;
+  border: 2px solid #e2e8f0;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 
   &:hover {
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
+    background-color: #f8fafc;
+    border-color: #cbd5e0;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
   }
 `;
 
 export const Title = styled.h1`
+  font-size: 1.75rem;
   color: #2d3748;
-  font-size: 2rem;
-  margin-bottom: 2rem;
-  text-align: center;
-  font-weight: 700;
-  background: linear-gradient(90deg, #4f46e5, #7c3aed);
-  background-clip: text;
+  margin: 0 0 1rem 0;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
+  font-weight: 700;
+  line-height: 1.3;
   position: relative;
+  display: inline-block;
   padding-bottom: 0.5rem;
-  
+
   &::after {
     content: '';
     position: absolute;
     bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80px;
-    height: 4px;
+    left: 0;
+    width: 100%;
+    height: 3px;
     background: linear-gradient(90deg, #4f46e5, #7c3aed);
     border-radius: 2px;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 1.5rem;
   }
 `;
 
@@ -55,7 +95,7 @@ export const Form = styled.form`
   display: flex;
   flex-direction: column;
   gap: 1.75rem;
-  max-width: 800px;
+  max-width: 900px;
   margin: 0 auto;
 `;
 
@@ -174,50 +214,25 @@ export const ErrorMessage = styled.span`
   gap: 0.25rem;
 `;
 
-export const DateInput = styled(Input)`
-  padding-right: 2.5rem;
-  background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3ZM19 5V19H5V5H19ZM16 10H8V12H16V10ZM16 14H8V16H16V14Z' fill='%23666666'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.75rem center;
-  background-size: 1.25rem;
-`;
-
-export const GridContainer = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+export const ButtonContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2rem;
   gap: 1rem;
-  width: 100%;
-  margin-bottom: 0.5rem;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-  }
-`;
-
-export const FullWidthInput = styled(Input)`
-  grid-column: 1 / -1;
-`;
-
-export const FullWidthTextArea = styled(TextArea)`
-  grid-column: 1 / -1;
-`;
-
-export const StatusSelect = styled(Select)`
-  width: 100%;
-  min-width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
+  padding: 1rem 0;
+  border-top: 1px solid #e2e8f0;
 `;
 
 export const SubmitButton = styled.button`
   background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
   color: white;
   border: none;
-  padding: 0.875rem 2rem;
-  border-radius: 10px;
+  padding: 0.75rem 2rem;
+  border-radius: 8px;
   font-size: 1rem;
   font-weight: 600;
+  margin-left: auto;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -225,7 +240,7 @@ export const SubmitButton = styled.button`
   gap: 0.625rem;
   transition: all 0.2s ease;
   box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.1), 0 2px 4px -1px rgba(79, 70, 229, 0.06);
-  min-width: 120px;
+  min-width: 150px;
   position: relative;
   overflow: hidden;
 
@@ -263,98 +278,78 @@ export const SubmitButton = styled.button`
   }
 `;
 
-export const ButtonContainer = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #edf2f7;
-`;
-
-export const SuccessMessage = styled.div`
-  background-color: #d4edda;
-  border: 1px solid #c3e6cb;
-  border-radius: 4px;
-  color: #155724;
-  padding: 1rem;
-  margin-bottom: 1.5rem;
-  text-align: center;
-  font-weight: 500;
-`;
-
-export const BackButton = styled.button`
-  background: none;
-  border: none;
-  color: #007bff;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1rem;
-  padding: 0.5rem 1rem;
-  margin-bottom: 1.5rem;
-
-  &:hover {
-    color: #0056b3;
-  }
-
-  svg {
-    width: 1rem;
-    height: 1rem;
+export const GridContainer = styled.div`
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
   }
 `;
 
-export const ErrorMessageContainer = styled.div`
-  color: #dc3545;
-  font-size: 0.875rem;
-  margin-bottom: 1rem;
-  text-align: center;
+export const FullWidthInput = styled(Input)`
+  grid-column: 1 / -1;
+`;
+
+export const FullWidthTextArea = styled(TextArea)`
+  grid-column: 1 / -1;
+`;
+
+export const StatusSelect = styled(Select)`
+  width: 100%;
+  min-width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 `;
 
 export const RequiredLabel = styled.span`
-  color: #dc3545;
+  color: #e53e3e;
   font-size: 0.875rem;
   margin-left: 0.25rem;
-`;
-
-export const DateRangeGroup = styled.div`
-  display: flex;
-  gap: 1rem;
-`;
-
-export const DateRangeLabel = styled(Label)`
-display: block;
-font-weight: 600;
-font-size: 0.9375rem;
-color: #4a5568;
-margin-left: 2px;
-margin-bottom: 0.5rem;
-`;
-
-export const DateRangeInput = styled(DateInput)`
-flex: 1;
-`;
-
-export const DateRangeError = styled(ErrorMessage)`
-  margin-top: 0.25rem;
 `;
 
 export const LoadingMessage = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem;
   padding: 2rem;
+  color: #4a5568;
+  font-weight: 500;
+  gap: 0.75rem;
   font-size: 1.1rem;
-  color: #666;
   
   svg {
     animation: spin 1s linear infinite;
   }
   
   @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    to { transform: rotate(360deg); }
   }
+`;
+
+export const SuccessMessage = styled.div`
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  color: #166534;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  animation: ${fadeIn} 0.3s ease-out;
+`;
+
+export const ErrorAlert = styled.div`
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #991b1b;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  animation: ${fadeIn} 0.3s ease-out;
 `;

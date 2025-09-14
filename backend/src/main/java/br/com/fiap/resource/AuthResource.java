@@ -17,6 +17,19 @@ import java.util.Map;
 @Consumes(MediaType.APPLICATION_JSON)
 public class AuthResource {
 
+    @GET
+    @Path("/generate-hash/{senha}")
+    public Response generateHash(@PathParam("senha") String senha) {
+        try {
+            String hash = PasswordHasher.hash(senha);
+            return Response.ok("{\"hash\":\"" + hash + "\"}").build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("{\"error\":\"Erro ao gerar hash: " + e.getMessage() + "\"}")
+                    .build();
+        }
+    }
+
     @POST
     @Path("/login")
     public Response login(String rawJson) {

@@ -10,6 +10,7 @@ import jakarta.transaction.Transactional;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -175,7 +176,33 @@ public class ClienteResource {
             }
 
             if (dto.getCpf() != null) {
-                cliente.setCpf(dto.getCpf());
+                LOGGER.log(Level.INFO, "CPF recebido no DTO: {0}", dto.getCpf());
+                
+                // Remove formatação do CPF antes de salvar
+                String cpfLimpo = dto.getCpf().replaceAll("[^0-9]", "");
+                LOGGER.log(Level.INFO, "CPF após limpeza: {0}", cpfLimpo);
+                
+                // Verifica se já existe outro cliente com o mesmo CPF
+                Optional<Cliente> clienteExistente = dao.pesquisarPorCpf(cpfLimpo);
+                LOGGER.log(Level.INFO, "Cliente existente com este CPF: {0}", 
+                    clienteExistente.isPresent() ? "Sim" : "Não");
+                
+                if (clienteExistente.isPresent() && clienteExistente.get().getIdCliente() != id) {
+                    LOGGER.warning("Tentativa de atualizar para um CPF já existente: " + cpfLimpo);
+                    throw new WebApplicationException(
+                        "Já existe um cliente cadastrado com este CPF",
+                        Response.Status.CONFLICT
+                    );
+                }
+                
+                // Atualiza o CPF apenas se for diferente do atual
+                if (!cpfLimpo.equals(cliente.getCpf())) {
+                    LOGGER.log(Level.INFO, "Atualizando CPF do cliente ID {0} para: {1}", 
+                        new Object[]{id, cpfLimpo});
+                    cliente.setCpf(cpfLimpo);
+                } else {
+                    LOGGER.log(Level.INFO, "CPF não foi alterado para o cliente ID: {0}", id);
+                }
             }
 
             // Salva as alterações

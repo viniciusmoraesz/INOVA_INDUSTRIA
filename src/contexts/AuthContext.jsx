@@ -86,8 +86,15 @@ export const AuthProvider = ({ children }) => {
 
       const userData = await response.json();
       console.log('Frontend: Received user data:', userData);
-      setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
+      
+      // Ensure the token is stored in the expected format
+      const userToStore = {
+        ...userData,
+        token: userData.token || userData.accessToken // Handle different token field names
+      };
+      
+      setUser(userToStore);
+      localStorage.setItem('user', JSON.stringify(userToStore));
       
       return userData;
     } catch (error) {

@@ -646,11 +646,6 @@ const ListaEmpresas = () => {
         </ModalOverlay>
       )}
       <Header>
-        <div>
-          <BackButton onClick={() => navigate(-1)}>
-            <FiArrowLeft /> Voltar
-          </BackButton>
-        </div>
         <Title>Lista de Empresas</Title>
         <Button onClick={() => navigate('/empresas/nova')}>
           <FiPlus /> Nova Empresa

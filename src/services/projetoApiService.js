@@ -83,15 +83,28 @@ const formatProjetoData = (data) => {
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
-  if (user?.token) {
-    return {
-      'Authorization': `Bearer ${user.token}`,
-      'Content-Type': 'application/json'
-    };
+  try {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) return { 'Content-Type': 'application/json' };
+    
+    const user = JSON.parse(userStr);
+    const token = user.token || (user.data && user.data.token);
+    
+    if (token) {
+      console.log('Using token from storage');
+      return {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      };
+    }
+  } catch (error) {
+    console.error('Error getting auth headers:', error);
   }
+  
   return {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
   };
 };
 

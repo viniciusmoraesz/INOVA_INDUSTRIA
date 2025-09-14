@@ -458,11 +458,6 @@ export default function CadastroProjeto() {
   return (
     <Container>
       <Header>
-        <div>
-          <BackButton onClick={() => navigate(-1)}>
-            <FiArrowLeft /> Voltar
-          </BackButton>
-        </div>
         <Title>Lista de Projetos</Title>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           {(isSuperAdmin || user?.role === 'ADMIN') && (

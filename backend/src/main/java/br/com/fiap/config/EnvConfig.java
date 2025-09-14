@@ -79,11 +79,12 @@ public class EnvConfig {
     }
 
     public static int getJwtExpirationHours() {
-        String hours = get("JWT_EXPIRATION_HOURS", "2");
+        // Definindo 24 horas como padrão para desenvolvimento
+        String hours = get("JWT_EXPIRATION_HOURS", "24");
         try {
             return Integer.parseInt(hours);
         } catch (NumberFormatException e) {
-            return 2;
+            return 24; // Retorna 24 horas em caso de erro
         }
     }
 

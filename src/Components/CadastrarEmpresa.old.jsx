@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import styled, { keyframes } from 'styled-components';
 import { showToast } from './Toast';
 import { 
   formatCNPJ, 
@@ -18,83 +19,231 @@ import {
 import { 
   FiArrowLeft, 
   FiSave, 
+  FiX, 
   FiSearch,
   FiInfo,
   FiBriefcase,
   FiMapPin,
   FiFileText,
   FiMail, 
-  FiPhone,
-  FiRefreshCw,
-  FiCheckCircle,
-  FiAlertCircle,
-  FiX,
-  FiPlus,
-  FiTrash2
+  FiPhone
 } from 'react-icons/fi';
 import empresaApiService from '../services/empresaApiService';
 import { consultarCNPJ } from '../services/cnpjService';
-import styled from 'styled-components';
 
-// Import styled components
-import {
-  PageContainer,
-  Title,
-  Form,
-  SectionTitle,
-  GridContainer,
-  FormGroup,
-  Label,
-  RequiredLabel,
-  Input,
-  TextArea,
-  Select,
-  ButtonContainer,
-  BackButton,
-  SubmitButton,
-  ErrorMessage,
-  SuccessMessage,
-  ErrorAlert,
-  LoadingMessage,
-  HelperText,
-  SearchButton,
-  FullWidth
-} from '../Styles/StyledCadastrarEmpresa';
+const fadeIn = keyframes`
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
 
-// Additional styled components specific to this component
+const PageContainer = styled.div`
+  padding: 2rem;
+  max-width: 1000px;
+  margin: 0 auto;
+  animation: ${fadeIn} 0.3s ease-out;
+`;
 
-const InputGroup = styled.div`
+const FormContainer = styled.div`
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  margin-top: 1.5rem;
+`;
+
+const Header = styled.div`
   display: flex;
-  width: 100%;
-  
-  input {
-    border-radius: 8px 0 0 8px !important;
-    flex: 1;
-  }
+  align-items: center;
+  margin-bottom: 2rem;
 `;
 
-const UppercaseInput = styled(Input)`
-  text-transform: uppercase;
-`;
-
-const CheckboxContainer = styled.div`
+const BackButton = styled.button`
+  background: none;
+  border: none;
+  color: #4a6cf7;
+  font-size: 1rem;
+  cursor: pointer;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin: 0.5rem 0;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
   
-  input[type="checkbox"] {
-    width: auto;
-    margin: 0;
+  &:hover {
+    background-color: #f0f2f5;
   }
 `;
 
-const FormSection = styled.div`
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
+const Title = styled.h1`
+  font-size: 1.5rem;
+  color: #2d3436;
+  margin: 0 0 0 1rem;
+`;
+
+const FormGroup = styled.div`
+  margin-bottom: 1rem;
+  
+  label {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #495057;
+    position: relative;
+    
+    span {
+      display: inline !important;
+    }
+  }
+  
+  &.error input,
+  &.error select {
+    border-color: #fa5252;
+  }
+`;
+
+const Select = styled.select`
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid ${props => props.$error ? '#ff4444' : '#e9ecef'};
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  background-color: ${props => props.disabled ? '#f8f9fa' : 'white'};
+  color: #333;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23333%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem top 50%;
+  background-size: 0.65rem auto;
+  padding-right: 2.5rem;
+  cursor: pointer;
+
+  &:focus {
+    outline: none;
+    border-color: ${props => props.$error ? '#ff4444' : '#4a6cf7'};
+    box-shadow: 0 0 0 2px ${props => props.$error ? 'rgba(255, 68, 68, 0.2)' : 'rgba(74, 108, 247, 0.2)'};
+  }
+
+  &:disabled {
+    background-color: #f8f9fa;
+    cursor: not-allowed;
+    opacity: 0.8;
+  }
+`;
+
+const Input = styled.input`
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid ${props => props.$error ? '#ff4444' : '#e9ecef'};
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  background-color: ${props => props.disabled ? '#f8f9fa' : 'white'};
+  color: #333;
+
+  &:focus {
+    outline: none;
+    border-color: ${props => props.$error ? '#ff4444' : '#4a6cf7'};
+    box-shadow: 0 0 0 2px ${props => props.$error ? 'rgba(255, 68, 68, 0.2)' : 'rgba(74, 108, 247, 0.2)'};
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: #4a6cf7;
+    box-shadow: 0 0 0 2px rgba(74, 108, 247, 0.2);
+  }
+`;
+
+const Button = styled.button`
+  background: #4a6cf7;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  
+  &:hover:not(:disabled) {
+    background: #3a5ce4;
+  }
+  
+  &:disabled {
+    background: #a8b4e0;
+    cursor: not-allowed;
+  }
+  
+  &.secondary {
+    background: #f8f9fa;
+    color: #495057;
+    border: 1px solid #e9ecef;
+    
+    &:hover:not(:disabled) {
+      background: #e9ecef;
+    }
+  }
+`;
+
+const SearchButton = styled(Button)`
+  background: #6c757d;
+  border-radius: 0 8px 8px 0;
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0 1rem;
+  
+  &:hover:not(:disabled) {
+    background: #5a6268;
+  }
+`;
+
+const InputGroup = styled.div`
+  display: flex;
+  
+  input {
+    border-radius: 8px 0 0 8px;
+  }
+`;
+
+const HelperText = styled.p`
+  font-size: 0.875rem;
+  color: #6c757d;
+  margin: 0.5rem 0 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const Grid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
   margin-bottom: 1.5rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const FullWidth = styled.div`
+  grid-column: 1 / -1;
+`;
+
+// ErrorText component is already defined above, removing duplicate
+
+const SuccessMessage = styled.div`
+  background: #d4edda;
+  color: #155724;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 `;
 
 const CadastrarEmpresa = () => {
@@ -184,19 +333,7 @@ const CadastrarEmpresa = () => {
     return requiredFields.includes(fieldName);
   };
 
-  const RequiredIndicator = () => <RequiredLabel>*</RequiredLabel>;
-
-  const handleCnpjBlur = (e) => {
-    const cnpj = e.target.value.replace(/\D/g, '');
-    if (cnpj.length === 14) {
-      if (!validateCNPJ(cnpj)) {
-        setErrors(prev => ({
-          ...prev,
-          cnpj: 'CNPJ inválido'
-        }));
-      }
-    }
-  };
+  const RequiredIndicator = () => <span style={{ color: '#ff4444', marginLeft: '2px' }}>*</span>;
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -209,7 +346,7 @@ const CadastrarEmpresa = () => {
       }));
     }
     
-    // Aplica máscaras conforme o tipo de campo
+    // Aplica máscaras conforme necessário
     let formattedValue = value;
     
     switch (name) {
@@ -221,10 +358,6 @@ const CadastrarEmpresa = () => {
         break;
       case 'cep':
         formattedValue = formatCEP(value);
-        if (formattedValue.replace(/\D/g, '').length === 8) {
-          // Se o CEP estiver completo, busca o endereço
-          buscarEnderecoPorCep(formattedValue);
-        }
         break;
       case 'inscricaoEstadual':
         formattedValue = formatInscricaoEstadual(value);
@@ -242,7 +375,7 @@ const CadastrarEmpresa = () => {
     }));
   };
   
-  const handleSearchCnpj = async () => {
+  const handleSearchCNPJ = async () => {
     const cnpjLimpo = formData.cnpj.replace(/\D/g, '');
     
     if (!validateCNPJ(cnpjLimpo)) {
@@ -440,74 +573,46 @@ const CadastrarEmpresa = () => {
 
   return (
     <PageContainer>
-      <Title>
-        <FiBriefcase />
-        {id ? 'Editar Empresa' : 'Cadastrar Nova Empresa'}
-      </Title>
+      <Header>
+        <BackButton onClick={() => navigate('/empresas')}>
+          <FiArrowLeft /> Voltar para a lista
+        </BackButton>
+        <Title>
+          {id ? 'Editar Empresa' : 'Cadastrar Nova Empresa'}
+        </Title>
+      </Header>
       
-      {error && (
-        <ErrorAlert>
-          <FiAlertCircle /> {error}
-        </ErrorAlert>
-      )}
-      
-      {success && (
-        <SuccessMessage>
-          <FiCheckCircle /> {success}
-        </SuccessMessage>
-      )}
-      
-      {isSubmitting && (
-        <LoadingMessage>
-          <FiRefreshCw className="spin" />
-          {id ? 'Atualizando empresa...' : 'Cadastrando empresa...'}
-        </LoadingMessage>
-      )}
-      
-      <Form onSubmit={handleSubmit}>
-        <FormSection>
-          <SectionTitle>
-            <FiBriefcase /> Dados da Empresa
-          </SectionTitle>
-          
-          <GridContainer>
+      <FormContainer>
+        {success && <SuccessMessage>{success}</SuccessMessage>}
+        {error && <ErrorText>{error}</ErrorText>}
+        
+        <form onSubmit={handleSubmit}>
+          <Grid>
             <FullWidth>
               <FormGroup>
-                <Label>CNPJ {isRequired('cnpj') && <RequiredIndicator />}</Label>
+                <label>CNPJ {isRequired('cnpj') && <RequiredIndicator />}</label>
                 <InputGroup>
                   <Input
                     type="text"
                     name="cnpj"
                     value={formData.cnpj}
                     onChange={handleInputChange}
-                    onBlur={(e) => {
-                      const cnpj = e.target.value.replace(/\D/g, '');
-                      if (cnpj.length === 14) {
-                        if (!validateCNPJ(cnpj)) {
-                          setErrors(prev => ({
-                            ...prev,
-                            cnpj: 'CNPJ inválido'
-                          }));
-                        }
-                      }
-                    }}
                     placeholder="00.000.000/0000-00"
                     maxLength={18}
-                    disabled={isSubmitting || isSearching || !!id}
-                    $hasError={!!errors.cnpj}
+                    disabled={isSubmitting || !!id}
+                    $error={!!errors.cnpj}
                   />
                   {!id && (
                     <SearchButton 
                       type="button" 
-                      onClick={handleSearchCnpj} 
-                      disabled={isSubmitting || isSearching || !formData.cnpj || formData.cnpj.length < 14}
+                      onClick={handleSearchCNPJ}
+                      disabled={isSubmitting || isSearching || !formData.cnpj}
                     >
-                      {isSearching ? <FiRefreshCw className="spin" /> : <FiSearch />}
-                      Buscar
+                      <FiSearch /> {isSearching ? 'Buscando...' : 'Buscar'}
                     </SearchButton>
                   )}
                 </InputGroup>
-                {errors.cnpj && <ErrorMessage>{errors.cnpj}</ErrorMessage>}
+                {errors.cnpj && <ErrorText>{errors.cnpj}</ErrorText>}
                 {!id && (
                   <HelperText>
                     <FiInfo /> Digite o CNPJ e clique em buscar para preencher os dados automaticamente
@@ -671,13 +776,14 @@ const CadastrarEmpresa = () => {
             <div>
               <FormGroup>
                 <label>Estado {isRequired('estado') && <RequiredIndicator />}</label>
-                <UppercaseInput
+                <Input
                   type="text"
                   name="estado"
                   value={formData.estado}
                   onChange={handleInputChange}
                   placeholder="UF"
                   maxLength={2}
+                  style={{ textTransform: 'uppercase' }}
                   disabled={isSubmitting}
                 />
               </FormGroup>
@@ -756,30 +862,23 @@ const CadastrarEmpresa = () => {
                 />
               </FormGroup>
             </div>
-          </GridContainer>
+          </Grid>
           
-          <ButtonContainer>
-            <BackButton 
+          <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
+            <Button type="submit" disabled={isSubmitting}>
+              <FiSave /> {isSubmitting ? 'Salvando...' : 'Salvar'}
+            </Button>
+            <Button 
               type="button" 
+              className="secondary" 
               onClick={() => navigate('/empresas')} 
               disabled={isSubmitting}
             >
-              <FiArrowLeft /> Voltar
-            </BackButton>
-            <SubmitButton type="submit" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <FiRefreshCw className="spin" /> Salvando...
-                </>
-              ) : (
-                <>
-                  <FiSave /> {id ? 'Atualizar Empresa' : 'Cadastrar Empresa'}
-                </>
-              )}
-            </SubmitButton>
-          </ButtonContainer>
-        </FormSection>
-      </Form>
+              <FiX /> Cancelar
+            </Button>
+          </div>
+        </form>
+      </FormContainer>
     </PageContainer>
   );
 };

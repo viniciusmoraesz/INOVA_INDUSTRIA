@@ -137,6 +137,7 @@ public class ClienteDAO implements AutoCloseable {
                 nome = ?,
                 email = ?,
                 telefone = ?,
+                cpf = ?,
                 data_nascimento = ?,
                 cargo = ?,
                 departamento = ?,
@@ -150,16 +151,22 @@ public class ClienteDAO implements AutoCloseable {
             stmt.setString(2, cliente.getNome());
             stmt.setString(3, cliente.getEmail());
             stmt.setString(4, cliente.getTelefone());
+            
+            // Garante que o CPF está limpo (apenas números)
+            String cpfLimpo = cliente.getCpf() != null ? 
+                cliente.getCpf().replaceAll("[^0-9]", "") : null;
+            stmt.setString(5, cpfLimpo);
+            
             if (cliente.getDataNascimento() != null) {
-                stmt.setDate(5, Date.valueOf(cliente.getDataNascimento()));
+                stmt.setDate(6, Date.valueOf(cliente.getDataNascimento()));
             } else {
-                stmt.setNull(5, Types.DATE);
+                stmt.setNull(6, Types.DATE);
             }
-            stmt.setString(6, cliente.getCargo());
-            stmt.setString(7, cliente.getDepartamento());
-            stmt.setString(8, cliente.getRole());
-            stmt.setString(9, cliente.getSenha());
-            stmt.setLong(10, cliente.getIdCliente());
+            stmt.setString(7, cliente.getCargo());
+            stmt.setString(8, cliente.getDepartamento());
+            stmt.setString(9, cliente.getRole());
+            stmt.setString(10, cliente.getSenha());
+            stmt.setLong(11, cliente.getIdCliente());
 
             int affectedRows = stmt.executeUpdate();
             if (affectedRows == 0) {

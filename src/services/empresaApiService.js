@@ -2,17 +2,35 @@ const API_BASE_URL = 'http://localhost:8080';
 
 // Helper function to get authentication headers
 const getAuthHeaders = () => {
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
-  if (user?.token) {
-    return {
-      'Authorization': `Bearer ${user.token}`,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    };
+  try {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) {
+      return {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Origin': 'http://localhost:5173'
+      };
+    }
+    
+    const user = JSON.parse(userStr);
+    const token = user.token || (user.data && user.data.token);
+    
+    if (token) {
+      return {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Origin': 'http://localhost:5173'
+      };
+    }
+  } catch (error) {
+    console.error('Error getting auth headers:', error);
   }
+  
   return {
     'Content-Type': 'application/json',
-    'Accept': 'application/json'
+    'Accept': 'application/json',
+    'Origin': 'http://localhost:5173'
   };
 };
 
@@ -333,27 +351,27 @@ const empresaApiService = {
         console.log(`[API] ID da empresa ${index}:`, empresa.id, typeof empresa.id);
         
         return {
-          id: empresa.id || empresa.idEmpresa || empresa.ID,
-        cnpj: empresa.cnpj || '',
-        razaoSocial: empresa.razaoSocial || '',
-        nomeFantasia: empresa.nomeFantasia || null,
-        email: empresa.email || null,
-        telefone: empresa.telefone || null,
-        endereco: empresa.endereco || null,
-        numero: empresa.numero || null,
-        complemento: empresa.complemento || null,
-        bairro: empresa.bairro || null,
-        cidade: empresa.cidade || null,
-        estado: empresa.estado || null,
-        cep: empresa.cep || null,
-        inscricaoEstadual: empresa.inscricaoEstadual || null,
-        inscricaoMunicipal: empresa.inscricaoMunicipal || null,
-        quantidadeFuncionarios: empresa.quantidadeFuncionarios || 0,
-        setorAtuacao: empresa.setorAtuacao || null,
-        dataFundacao: empresa.dataFundacao || empresa.dataCadastro || null,
-        ativo: empresa.ativo !== undefined ? empresa.ativo : true,
-        dataCadastro: empresa.dataCadastro || null,
-        dataAtualizacao: empresa.dataAtualizacao || null
+          id: empresa.idEmpresa || empresa.id || empresa.ID, // Prioriza idEmpresa
+          cnpj: empresa.cnpj || '',
+          razaoSocial: empresa.razaoSocial || '',
+          nomeFantasia: empresa.nomeFantasia || null,
+          email: empresa.email || null,
+          telefone: empresa.telefone || null,
+          endereco: empresa.endereco || null,
+          numero: empresa.numero || null,
+          complemento: empresa.complemento || null,
+          bairro: empresa.bairro || null,
+          cidade: empresa.cidade || null,
+          estado: empresa.estado || null,
+          cep: empresa.cep || null,
+          inscricaoEstadual: empresa.inscricaoEstadual || null,
+          inscricaoMunicipal: empresa.inscricaoMunicipal || null,
+          quantidadeFuncionarios: empresa.quantidadeFuncionarios || 0,
+          setorAtuacao: empresa.setorAtuacao || null,
+          dataFundacao: empresa.dataFundacao || empresa.dataCadastro || null,
+          ativo: empresa.ativo !== undefined ? empresa.ativo : true,
+          dataCadastro: empresa.dataCadastro || null,
+          dataAtualizacao: empresa.dataAtualizacao || null
         };
       });
       
