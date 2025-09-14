@@ -20,6 +20,7 @@ import AdicionarAtividade from './Components/AdicionarAtividade.jsx';
 import AdicionarSubAtividade from './Components/AdicionarSubAtividade.jsx';
 import PaginaCadaProjeto from './Components/PaginaCadaProjeto.jsx';
 import MainPage from './Components/MainPage.jsx';
+import Dashboard from './pages/Dashboard.jsx';
 import Header from './Components/Header.jsx';
 import Usuariosrh from './Components/Usuariosrh.jsx';
 import EditUserPage from './Components/EditUserPage.jsx';
@@ -41,6 +42,11 @@ const AppRouter = () => {
       <Route path="contato" element={<Contato />} />
       <Route path="/*" element={<PrivateRoute><App /></PrivateRoute>}>
         <Route index element={<MainPage />} />
+        <Route path="dashboard" element={
+          <RoleProtectedRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
+            <Dashboard />
+          </RoleProtectedRoute>
+        } />
         
         <Route path="projetos" element={<CadastroProjeto />} />
         <Route path="projetos/novo" element={

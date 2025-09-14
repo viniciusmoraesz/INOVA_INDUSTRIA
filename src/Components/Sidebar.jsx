@@ -12,7 +12,7 @@ import {
   MenuLink,
   Overlay
 } from '../Styles/StyledSidebar';
-import { FiMenu, FiX, FiUsers, FiFolder, FiBriefcase, FiLogOut } from 'react-icons/fi';
+import { FiMenu, FiX, FiUsers, FiFolder, FiBriefcase, FiLogOut, FiBarChart2 } from 'react-icons/fi';
 import { useAuth } from '../contexts/AuthContext';
 
 const Sidebar = () => {
@@ -24,6 +24,12 @@ const Sidebar = () => {
 
   // Menu items configuration
   const menuItems = [
+    {
+      title: 'Dashboard',
+      path: '/dashboard',
+      icon: <FiBarChart2 />,
+      roles: ['ADMIN', 'SUPER_ADMIN']
+    },
     {
       title: 'Clientes',
       path: '/clientes',
