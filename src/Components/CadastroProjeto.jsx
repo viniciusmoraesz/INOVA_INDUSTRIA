@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import ChatIAButton from './ChatIAButton';
+import ChatIABox from './ChatIABox';
 import { Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { 
@@ -343,6 +345,7 @@ const DeleteButton = styled.button`
 `;
 
 export default function CadastroProjeto() {
+  const [showChatIA, setShowChatIA] = useState(false);
   const [projects, setProjects] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('Todos');
@@ -461,11 +464,16 @@ export default function CadastroProjeto() {
           </BackButton>
         </div>
         <Title>Lista de Projetos</Title>
-        {(isSuperAdmin || user?.role === 'ADMIN') && (
-          <Button onClick={() => navigate('/projetos/novo')}>
-            <FiPlus /> Novo Projeto
-          </Button>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          {(isSuperAdmin || user?.role === 'ADMIN') && (
+            <Button onClick={() => navigate('/projetos/novo')}>
+              <FiPlus /> Novo Projeto
+            </Button>
+          )}
+          {(isSuperAdmin || user?.role === 'ADMIN') && (
+            <ChatIAButton active={showChatIA} onClick={() => setShowChatIA(v => !v)} />
+          )}
+        </div>
       </Header>
 
       <form onSubmit={(e) => e.preventDefault()}>
@@ -481,6 +489,18 @@ export default function CadastroProjeto() {
           </button>
         </SearchContainer>
       </form>
+
+      {/* Chat IA - aparece abaixo do container de pesquisa/botão */}
+      {showChatIA && (isSuperAdmin || user?.role === 'ADMIN') && (
+        <ChatIABox 
+          projetos={projects.map(p => ({
+            id: p.idProjeto,
+            titulo: p.titulo,
+            status: p.status,
+            prazo: p.dataTerminoPrevista || ''
+          }))}
+        />
+      )}
 
       <FilterContainer>
         {['Todos', 'Em planejamento', 'Em andamento', 'Concluído'].map(status => (

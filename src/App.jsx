@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import Sidebar from "./Components/Sidebar";
 import Chatbot from "./Components/Chatbot";
 import { ToastProvider } from "./Components/Toast";
+import { ChatIAProvider } from "./contexts/ChatIAContext";
 import styled, { createGlobalStyle } from 'styled-components';
 
 // Global styles to handle body overflow when sidebar is open
@@ -46,14 +47,16 @@ function App() {
 
   return (
     <ToastProvider>
-      <GlobalStyle />
-      <div className="app" style={{ display: 'flex', minHeight: '100vh', position: 'relative' }}>
-        <Sidebar />
-        <MainContent>
-          <Outlet />
-        </MainContent>
-        <Chatbot />
-      </div>
+      <ChatIAProvider>
+        <GlobalStyle />
+        <div className="app" style={{ display: 'flex', minHeight: '100vh', position: 'relative' }}>
+          <Sidebar />
+          <MainContent>
+            <Outlet />
+          </MainContent>
+          <Chatbot />
+        </div>
+      </ChatIAProvider>
     </ToastProvider>
   );
 }
