@@ -95,11 +95,55 @@ export default function ChatIABox({ projetos }) {
   const isAllowed = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
 
   if (!isAllowed) return null;
-  // Adiciona mensagem inicial só se o histórico estiver vazio
+  // Adiciona mensagem inicial só se não houver NENHUMA mensagem (nem user nem ia)
   React.useEffect(() => {
     if (messages.length === 0) {
       addMessage({ type: 'ia', text: 'Como posso te ajudar?' });
     }
+    // eslint-disable-next-line
+  }, []);
+
+  // Garante que só existe UMA mensagem inicial, mesmo com múltiplos renders/providers
+  React.useEffect(() => {
+    // Remove todas as mensagens duplicadas de saudação
+    const saudacao = 'Como posso te ajudar?';
+    const iaMsgs = messages.filter(m => m.type === 'ia' && m.text === saudacao);
+    if (iaMsgs.length > 1) {
+      // Remove todas as duplicadas, deixa só a primeira
+      const firstIdx = messages.findIndex(m => m.type === 'ia' && m.text === saudacao);
+      const filtered = messages.filter((m, idx) => m.type !== 'ia' || m.text !== saudacao || idx === firstIdx);
+      // Força atualização do contexto
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('chatia:fix-dup'));
+      }, 0);
+      // Não chama addMessage para evitar loop
+      return;
+    }
+    if (messages.length === 0) {
+      addMessage({ type: 'ia', text: saudacao });
+    }
+    // eslint-disable-next-line
+  }, [messages, addMessage]);
+
+  // Listener global para corrigir duplicidade em todos os componentes
+  React.useEffect(() => {
+    function fixDup() {
+      const saudacao = 'Como posso te ajudar?';
+      const iaMsgs = messages.filter(m => m.type === 'ia' && m.text === saudacao);
+      if (iaMsgs.length > 1) {
+        const firstIdx = messages.findIndex(m => m.type === 'ia' && m.text === saudacao);
+        const filtered = messages.filter((m, idx) => m.type !== 'ia' || m.text !== saudacao || idx === firstIdx);
+        // Limpa e repopula o contexto
+        if (filtered.length !== messages.length) {
+          // Hack: limpa e repopula
+          while (messages.length) messages.pop();
+          filtered.forEach(m => addMessage(m));
+        }
+      }
+    }
+    window.addEventListener('chatia:fix-dup', fixDup);
+    return () => window.removeEventListener('chatia:fix-dup', fixDup);
+    // eslint-disable-next-line
   }, [messages, addMessage]);
 
   const handleSubmit = async (e) => {
