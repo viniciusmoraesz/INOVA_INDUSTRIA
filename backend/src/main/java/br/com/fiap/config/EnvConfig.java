@@ -62,11 +62,11 @@ public class EnvConfig {
 
     // Métodos específicos para configurações do banco
     public static String getDatabaseUrl() {
-        return get("DB_URL", "jdbc:postgresql://localhost:5432/DB_INOVA_INDUSTRIA");
+        return get("DB_URL", "");
     }
 
     public static String getDatabaseUser() {
-        return get("DB_USER", "postgres");
+        return get("DB_USER", "");
     }
 
     public static String getDatabasePassword() {

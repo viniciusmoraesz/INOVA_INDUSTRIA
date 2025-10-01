@@ -3,6 +3,8 @@ package br.com.fiap.model;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Projeto {
     private Long idProjeto;
@@ -46,6 +48,8 @@ public class Projeto {
         this.status = status;
         this.prioridade = prioridade;
     }
+
+    private List<Atividade> atividades = new ArrayList<>();
 
     // Getters and Setters
     public Long getIdProjeto() {
@@ -150,5 +154,13 @@ public class Projeto {
 
     public void setClienteNome(String clienteNome) {
         this.clienteNome = clienteNome;
+    }
+    
+    public List<Atividade> getAtividades() {
+        return atividades;
+    }
+    
+    public void setAtividades(List<Atividade> atividades) {
+        this.atividades = atividades;
     }
 }

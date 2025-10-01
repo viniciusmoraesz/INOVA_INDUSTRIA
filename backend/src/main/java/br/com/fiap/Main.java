@@ -23,18 +23,13 @@ public class Main {
     private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
     public static final String BASE_URI = "http://localhost:8080/";
 
-    
-
     public static void main(String[] args) {
 
-        String senha = EnvConfig.getDatabasePassword();
-        System.out.println("Senha lida: " + senha.replaceAll(".", "*"));
-
         try {
-            // 1. Rodar migrations antes de subir o servidor
-            // runMigrations(); // Migrações já aplicadas manualmente
+            // 1️⃣ Rodar migrations antes de subir o servidor
+            runMigrations();
 
-            // 2. Iniciar servidor
+            // 2️⃣ Iniciar servidor
             HttpServer server = startServer();
             LOGGER.info(String.format("Jersey app started with WADL available at %sapplication.wadl", BASE_URI));
             LOGGER.info("Hit Ctrl-C to stop it...");
@@ -52,18 +47,24 @@ public class Main {
 
     private static void runMigrations() {
         try {
+            // Configura Flyway
             Flyway flyway = Flyway.configure()
                     .dataSource(
-                            "jdbc:postgresql://localhost:5432/inova_industria", // URL do banco
-                            "postgres",  // usuário
-                            "senha"      // senha
+                            EnvConfig.getDatabaseUrl(),
+                            EnvConfig.getDatabaseUser(),
+                            EnvConfig.getDatabasePassword()
                     )
+                    // Certifique-se que as migrations estão nessa pasta dentro do classpath
+                    .locations("classpath:db/migration")
+                    // Como apagamos tudo, não precisamos de baseline
+                    .baselineOnMigrate(false)
                     .load();
 
+            LOGGER.info("🔄 Iniciando migrations...");
             flyway.migrate();
-            LOGGER.info("Migrations aplicadas com sucesso!");
+            LOGGER.info("✅ Migrations aplicadas com sucesso!");
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Erro ao aplicar migrations com Flyway", e);
+            LOGGER.log(Level.SEVERE, "❌ Erro ao aplicar migrations com Flyway", e);
             throw new RuntimeException("Falha ao aplicar migrations", e);
         }
     }

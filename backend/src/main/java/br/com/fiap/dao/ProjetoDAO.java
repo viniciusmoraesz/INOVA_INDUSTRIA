@@ -4,6 +4,8 @@ import br.com.fiap.factory.ConnectionFactory;
 import br.com.fiap.model.Projeto;
 import br.com.fiap.model.Projeto.PrioridadeProjeto;
 import br.com.fiap.model.Projeto.StatusProjeto;
+import br.com.fiap.model.Atividade;
+import br.com.fiap.model.SubAtividade;
 
 import java.sql.*;
 import java.time.LocalDate;
@@ -253,5 +255,93 @@ public class ProjetoDAO implements AutoCloseable {
         } else {
             stmt.setNull(parameterIndex, Types.DOUBLE);
         }
+    }
+    
+    public Optional<Projeto> pesquisarPorIdComAtividades(Long id) throws SQLException {
+        // Primeiro, busca o projeto básico
+        Optional<Projeto> projetoOpt = pesquisarPorId(id);
+        if (!projetoOpt.isPresent()) {
+            return Optional.empty();
+        }
+
+        Projeto projeto = projetoOpt.get();
+        
+        // Busca as atividades do projeto
+        String sqlAtividades = "SELECT a.*, " +
+                "sa.id_subatividade, sa.titulo as sub_titulo, sa.descricao as sub_descricao, " +
+                "sa.data_inicio_prevista as sub_data_inicio, sa.data_termino_prevista as sub_data_termino, " +
+                "sa.data_termino_real as sub_data_termino_real, sa.status as sub_status, " +
+                "sa.prioridade as sub_prioridade, sa.data_cadastro as sub_data_cadastro " +
+                "FROM TB_ATIVIDADE a " +
+                "LEFT JOIN TB_SUBATIVIDADE sa ON a.id_atividade = sa.id_atividade " +
+                "WHERE a.id_projeto = ? " +
+                "ORDER BY a.data_cadastro, sa.data_cadastro";
+
+        try (PreparedStatement stmt = conexao.prepareStatement(sqlAtividades)) {
+            stmt.setLong(1, id);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                List<Atividade> atividades = new ArrayList<>();
+                Atividade atividadeAtual = null;
+                
+                while (rs.next()) {
+                    Long idAtividade = rs.getLong("id_atividade");
+                    
+                    // Se é uma nova atividade
+                    if (atividadeAtual == null || !idAtividade.equals(atividadeAtual.getIdAtividade())) {
+                        if (atividadeAtual != null) {
+                            atividades.add(atividadeAtual);
+                        }
+                        
+                        atividadeAtual = new Atividade();
+                        atividadeAtual.setIdAtividade(idAtividade);
+                        atividadeAtual.setIdProjeto(rs.getLong("id_projeto"));
+                        atividadeAtual.setIdResponsavel(rs.getLong("id_responsavel"));
+                        atividadeAtual.setTitulo(rs.getString("titulo"));
+                        atividadeAtual.setDescricao(rs.getString("descricao"));
+                        atividadeAtual.setDataInicioPrevista(rs.getDate("data_inicio_prevista") != null ? 
+                                rs.getDate("data_inicio_prevista").toLocalDate() : null);
+                        atividadeAtual.setDataTerminoPrevista(rs.getDate("data_termino_prevista") != null ? 
+                                rs.getDate("data_termino_prevista").toLocalDate() : null);
+                        atividadeAtual.setDataTerminoReal(rs.getDate("data_termino_real") != null ? 
+                                rs.getDate("data_termino_real").toLocalDate() : null);
+                        atividadeAtual.setStatus(Atividade.StatusAtividade.valueOf(rs.getString("status")));
+                        atividadeAtual.setPrioridade(Atividade.PrioridadeAtividade.valueOf(rs.getString("prioridade")));
+                        atividadeAtual.setDataCadastro(rs.getTimestamp("data_cadastro").toLocalDateTime());
+                        atividadeAtual.setSubatividades(new ArrayList<>());
+                    }
+                    
+                    // Adiciona subatividade se existir
+                    Long idSubatividade = rs.getLong("id_subatividade");
+                    if (!rs.wasNull()) {
+                        SubAtividade subatividade = new SubAtividade();
+                        subatividade.setIdSubAtividade(idSubatividade);
+                        subatividade.setIdAtividade(idAtividade);
+                        subatividade.setTitulo(rs.getString("sub_titulo"));
+                        subatividade.setDescricao(rs.getString("sub_descricao"));
+                        subatividade.setDataInicioPrevista(rs.getDate("sub_data_inicio") != null ? 
+                                rs.getDate("sub_data_inicio").toLocalDate() : null);
+                        subatividade.setDataTerminoPrevista(rs.getDate("sub_data_termino") != null ? 
+                                rs.getDate("sub_data_termino").toLocalDate() : null);
+                        subatividade.setDataTerminoReal(rs.getDate("sub_data_termino_real") != null ? 
+                                rs.getDate("sub_data_termino_real").toLocalDate() : null);
+                        subatividade.setStatus(rs.getString("sub_status"));
+                        subatividade.setPrioridade(rs.getString("sub_prioridade"));
+                        subatividade.setDataCadastro(rs.getTimestamp("sub_data_cadastro").toLocalDateTime());
+                        
+                        atividadeAtual.getSubatividades().add(subatividade);
+                    }
+                }
+                
+                // Adiciona a última atividade processada
+                if (atividadeAtual != null) {
+                    atividades.add(atividadeAtual);
+                }
+                
+                projeto.setAtividades(atividades);
+            }
+        }
+        
+        return Optional.of(projeto);
     }
 }

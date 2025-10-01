@@ -137,16 +137,32 @@ public class ProjetoResource {
         System.out.println("🔍 GET /projetos/" + id + " - Buscando projeto por ID");
         try (ProjetoDAO dao = new ProjetoDAO()) {
             return dao.pesquisarPorId(id)
-                    .map(projeto -> {
-                        System.out.println("✅ Projeto encontrado: " + projeto);
-                        return Response.ok(projeto).build();
-                    })
-                    .orElse(Response.status(Response.Status.NOT_FOUND).build());
+                    .map(projeto -> Response.ok(projeto).build())
+                    .orElse(Response.status(Response.Status.NOT_FOUND)
+                            .entity("{\"erro\":\"Projeto não encontrado\"}")
+                            .build());
         } catch (SQLException e) {
-            System.err.println("❌ Erro SQL ao buscar projeto: " + e.getMessage());
             e.printStackTrace();
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity("{\"erro\":\"Erro ao buscar projeto\"}")
+            return Response.serverError()
+                    .entity("{\"erro\":\"Erro ao buscar projeto: " + e.getMessage() + "\"}")
+                    .build();
+        }
+    }
+    
+    @GET
+    @Path("/{id}/completo")
+    public Response buscarProjetoCompleto(@PathParam("id") Long id) {
+        System.out.println("🔍 GET /projetos/" + id + "/completo - Buscando projeto com atividades e subatividades");
+        try (ProjetoDAO dao = new ProjetoDAO()) {
+            return dao.pesquisarPorIdComAtividades(id)
+                    .map(projeto -> Response.ok(projeto).build())
+                    .orElse(Response.status(Response.Status.NOT_FOUND)
+                            .entity("{\"erro\":\"Projeto não encontrado\"}")
+                            .build());
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return Response.serverError()
+                    .entity("{\"erro\":\"Erro ao buscar projeto com atividades: " + e.getMessage() + "\"}")
                     .build();
         }
     }

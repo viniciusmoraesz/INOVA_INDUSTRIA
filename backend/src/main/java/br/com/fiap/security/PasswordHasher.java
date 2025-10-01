@@ -115,43 +115,21 @@ public final class PasswordHasher {
     }
 
     // Método main para testar a verificação de senha
+    // Método para gerar o hash de uma senha e retornar como string
+    public static String generateHashForPassword(String password) {
+        if (password == null) {
+            throw new IllegalArgumentException("A senha não pode ser nula");
+        }
+        return hash(password.toCharArray());
+    }
+    
     public static void main(String[] args) {
-        // Hash que está armazenado no banco de dados
-        String storedHash = "$argon2id$v=19$m=16384,t=3,p=2$1JGt91diS5tIFAPTUmgq2A$FDl6pC99zeqN1VWtdMCFwuBd/7bpe5hvRXpXsq2RxaQ";
-        
-        // Gera um novo hash para comparação
-        String expectedHash = hash("Tobias123".toCharArray());
-        System.out.println("\n=== HASHES PARA COMPARAÇÃO ===");
-        System.out.println("Hash armazenado:  " + storedHash);
-        System.out.println("Hash esperado:    " + expectedHash);
-        System.out.println("Hashes iguais?    " + storedHash.equals(expectedHash) + " (não precisa ser igual, pois usam salts diferentes)");
-        
-        // Teste com a senha correta
-        System.out.println("\n=== TESTE COM SENHA CORRETA ===");
-        testPasswordVerification(storedHash, "Tobias123");
-        
-        // Teste com a senha incorreta
-        System.out.println("\n=== TESTE COM SENHA INCORRETA ===");
-        testPasswordVerification(storedHash, "senhaincorreta");
-        
-        // Teste com a senha em branco
-        System.out.println("\n=== TESTE COM SENHA EM BRANCO ===");
-        testPasswordVerification(storedHash, "");
-        
-        // Teste com a senha nula
-        System.out.println("\n=== TESTE COM SENHA NULA ===");
-        testPasswordVerification(storedHash, null);
-        
-        // Teste com o hash nulo
-        System.out.println("\n=== TESTE COM HASH NULO ===");
-        testPasswordVerification(null, "Tobias123");
-        
-        // Teste com o hash vazio
-        System.out.println("\n=== TESTE COM HASH VAZIO ===");
-        testPasswordVerification("", "Tobias123");
-        
-        // Teste com hash inválido
-        System.out.println("\n=== TESTE COM HASH INVÁLIDO ===");
-        testPasswordVerification("hash_invalido", "Tobias123");
+        // Gera o hash para "super_secret"
+        System.out.println("=== HASH PARA 'super_secret' ===");
+        String superSecretHash = hash("super_secret".toCharArray());
+        System.out.println(superSecretHash);
+
+        // Encerra o programa após exibir o hash
+        System.exit(0);
     }
 }

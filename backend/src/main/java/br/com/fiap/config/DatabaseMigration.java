@@ -29,7 +29,7 @@ public class DatabaseMigration {
             Flyway flyway = Flyway.configure()
                     .dataSource(url, user, password)
                     .locations("classpath:db/migration")
-                    .baselineOnMigrate(true)
+                    .baselineOnMigrate(false)
                     .load();
 
             System.out.println("🔄 Iniciando migrations...");

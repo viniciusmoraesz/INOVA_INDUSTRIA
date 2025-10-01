@@ -224,17 +224,35 @@ const projetoApiService = {
   // List projects by client ID
   async listarProjetosPorCliente(idCliente) {
     try {
-      const response = await fetch(`${API_BASE_URL}/clientes/${idCliente}/projetos`, {
+      const response = await fetch(`${API_BASE_URL}/projetos/cliente/${idCliente}`, {
         method: 'GET',
-        headers: getAuthHeaders(),
+        headers: await getAuthHeaders()
       });
-
+      
       return await handleResponse(response);
     } catch (error) {
-      console.error(`Erro ao listar projetos do cliente ${idCliente}:`, error);
+      console.error('Erro ao buscar projetos do cliente:', error);
       throw error;
     }
-  }
+  },
+  
+  // Busca um projeto completo com todas as suas atividades e subatividades
+  async buscarProjetoCompleto(idProjeto) {
+    try {
+      console.log(`Buscando projeto completo com ID: ${idProjeto}`);
+      const response = await fetch(`${API_BASE_URL}/projetos/${idProjeto}/completo`, {
+        method: 'GET',
+        headers: await getAuthHeaders()
+      });
+      
+      const data = await handleResponse(response);
+      console.log('Projeto completo recebido:', data);
+      return data;
+    } catch (error) {
+      console.error('Erro ao buscar projeto completo:', error);
+      throw error;
+    }
+  },
 };
 
 export default projetoApiService;

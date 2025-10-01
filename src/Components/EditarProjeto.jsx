@@ -12,11 +12,13 @@ import {
   FiDollarSign,
   FiFileText,
   FiUser,
-  FiBriefcase
+  FiBriefcase,
+  FiList
 } from 'react-icons/fi';
 import projetoApiService from '../services/projetoApiService';
 import empresaApiService from '../services/empresaApiService';
 import { clienteApiService } from '../services/clienteApiService';
+import AtividadesProjeto from './AtividadesProjeto';
 
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(10px); }
@@ -797,6 +799,16 @@ export default function EditarProjeto() {
               </SaveButton>
             </ButtonGroup>
           </Form>
+        </CardBody>
+      </Card>
+
+      {/* Seção de Atividades */}
+      <Card style={{ marginTop: '2rem' }}>
+        <CardHeader>
+          <h2><FiList size={20} /> Atividades do Projeto</h2>
+        </CardHeader>
+        <CardBody>
+          <AtividadesProjeto />
         </CardBody>
       </Card>
     </PageContainer>
