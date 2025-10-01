@@ -486,7 +486,7 @@ export default function CadastroProjeto() {
       </form>
 
       {/* Chat IA - aparece abaixo do container de pesquisa/botão */}
-      {showChatIA && (isSuperAdmin || user?.role === 'ADMIN') && (
+      {(showChatIA && (isSuperAdmin || user?.role === 'ADMIN')) && (
         <ChatIABox 
           projetos={projects.map(p => ({
             id: p.idProjeto,

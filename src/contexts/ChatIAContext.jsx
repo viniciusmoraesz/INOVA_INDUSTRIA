@@ -5,6 +5,11 @@ const ChatIAContext = createContext();
 export function ChatIAProvider({ children }) {
   const [messages, setMessages] = useState([]);
 
+  // Garante que o histórico é limpo ao desmontar o provider (ex: ao sair da página)
+  React.useEffect(() => {
+    return () => setMessages([]);
+  }, []);
+
   const addMessage = (msg) => {
     setMessages((prev) => [...prev, msg]);
   };
